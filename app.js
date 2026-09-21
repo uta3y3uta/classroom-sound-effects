@@ -119,13 +119,23 @@ function applyVolume() {
 function play(id, pad) {
   if (ctx.state === "suspended") ctx.resume();
   loadSound(id).then((buf) => {
+    // 同じ音を連打したとき重なって濁らないよう，前の発音は素早く切る
+    const t0 = ctx.currentTime;
+    for (const a of active) {
+      if (a.id !== id) continue;
+      a.g.gain.cancelScheduledValues(t0);
+      a.g.gain.setValueAtTime(a.g.gain.value, t0);
+      a.g.gain.linearRampToValueAtTime(0, t0 + 0.02);
+      try { a.src.stop(t0 + 0.025); } catch (e) {}
+    }
+    active = active.filter((a) => a.id !== id);
     const src = ctx.createBufferSource();
     src.buffer = buf;
     const g = ctx.createGain();
     g.gain.value = SOUNDS[byId.get(id)].g || 1;
     src.connect(g).connect(master);
     src.start();
-    const rec = { src, g };
+    const rec = { src, g, id };
     active.push(rec);
     src.onended = () => { active = active.filter((a) => a !== rec); };
     if (pad) indicate(pad, buf.duration);

@@ -210,14 +210,6 @@ input[type=range]::-moz-range-thumb{
 .icon-btn.danger{color:#ff6b6b;}
 body.is-muted .vol-wrap{opacity:.35;}
 
-.credit{
-  flex:0 0 auto;text-align:center;
-  font-size:9.5px;letter-spacing:.04em;color:var(--text-faint);
-  padding:7px 0 1px;
-}
-.credit a{color:var(--text-dim);text-decoration:none;}
-.credit a:hover{color:var(--text);text-decoration:underline;}
-
 /* ===== 編集バー ===== */
 .editbar{
   flex:0 0 auto;
