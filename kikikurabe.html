@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>聴き比べ｜教室効果音アプリ</title>
+<style>
+:root{color-scheme:dark;}
+*{box-sizing:border-box;}
+body{margin:0;padding:20px 16px 80px;background:#0a0a0c;color:#e8e8ee;
+  font-family:-apple-system,BlinkMacSystemFont,"Hiragino Sans","Noto Sans JP",sans-serif;
+  -webkit-text-size-adjust:100%;}
+h1{font-size:19px;margin:0 0 6px;letter-spacing:.04em;}
+.lead{font-size:13px;line-height:1.7;color:#9a9aa8;margin:0 0 26px;}
+section{margin:0 0 26px;padding:16px;border:1px solid #23232c;border-radius:14px;background:#111116;}
+h2{font-size:16px;margin:0 0 4px;}
+.now{font-size:12px;color:#8a8a98;margin:0 0 12px;}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid #1e1e26;}
+.row:first-of-type{border-top:0;}
+button{flex:0 0 auto;width:62px;height:44px;border:0;border-radius:11px;font-size:17px;font-weight:700;
+  background:#2b2b36;color:#e8e8ee;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+button:active,button.on{background:#4f46e5;color:#fff;}
+.desc{font-size:13.5px;line-height:1.5;}
+.tag{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:99px;font-size:11px;
+  background:#1d3a2a;color:#63d69a;vertical-align:1px;}
+.stop{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;width:200px;height:48px;
+  border-radius:24px;background:#b3261e;color:#fff;font-size:15px;box-shadow:0 8px 24px #0009;}
+</style>
+</head>
+<body>
+
+<h1>聴き比べ</h1>
+<p class="lead">作り直す6音の候補です。それぞれ番号で「これ」と教えてください。<br>
+どれも違うときは，どこが違うかを書いていただければ探し直します。</p>
+
+<section>
+  <h2>１UP</h2>
+  <p class="now">いまは自作のチップチューン。A〜Dは本物の8bit音源素材（OtoLogic）です。</p>
+  <div class="row"><button data-s="try/oneup-a.mp3">A</button><span class="desc">ゲームボーイ風のアイテム取得ジングル</span></div>
+  <div class="row"><button data-s="try/oneup-b.mp3">B</button><span class="desc">ファミコン風のアイテム取得</span></div>
+  <div class="row"><button data-s="try/oneup-c.mp3">C</button><span class="desc">ファミコン風のスコア加算（長め）</span></div>
+  <div class="row"><button data-s="try/oneup-d.mp3">D</button><span class="desc">スーファミ風のアイテム取得</span></div>
+  <div class="row"><button data-s="try/oneup-e.mp3">E</button><span class="desc">自作チップチューン・速く明るく作り直したもの</span></div>
+  <div class="row"><button data-s="sfx/oneup.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+</section>
+
+<section>
+  <h2>土管</h2>
+  <p class="now">「すとん」と中へ入っていく音です。</p>
+  <div class="row"><button data-s="try/dokan-a.mp3">A</button><span class="desc">ファミコン風「入る」</span></div>
+  <div class="row"><button data-s="try/dokan-b.mp3">B</button><span class="desc">ゲームボーイ風「扉」</span></div>
+  <div class="row"><button data-s="try/dokan-c.mp3">C</button><span class="desc">スーファミ風「入る」</span></div>
+  <div class="row"><button data-s="try/dokan-d.mp3">D</button><span class="desc">ゲームボーイRPG風「入る」</span></div>
+  <div class="row"><button data-s="try/dokan-e.mp3">E</button><span class="desc">自作・ゆっくり深く落ちる下降音</span></div>
+  <div class="row"><button data-s="sfx/dokan.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+</section>
+
+<section>
+  <h2>ピロピロ</h2>
+  <p class="now">テレビの自主規制音です。うねり方の速さ・幅ちがいを並べました。</p>
+  <div class="row"><button data-s="try/piropiro-a.mp3">A</button><span class="desc">2音が速く入れ替わる（ピロピロピロ）</span></div>
+  <div class="row"><button data-s="try/piropiro-b.mp3">B</button><span class="desc">2音がゆっくり入れ替わる（ピロ・ピロ）</span></div>
+  <div class="row"><button data-s="try/piropiro-c.mp3">C</button><span class="desc">音程がなめらかにうねる（ひょろひょろ）</span></div>
+  <div class="row"><button data-s="try/piropiro-d.mp3">D</button><span class="desc">なめらかで速いうねり</span></div>
+  <div class="row"><button data-s="try/piropiro-e.mp3">E</button><span class="desc">海外の実素材（Freesound）</span></div>
+  <div class="row"><button data-s="sfx/piropiro.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+</section>
+
+<section>
+  <h2>ゆうれい</h2>
+  <p class="now">「ひゅ～どろどろ」に近いものを探しました。</p>
+  <div class="row"><button data-s="try/yuurei-a.mp3">A</button><span class="desc">うめき声入りの下降音（低い）</span></div>
+  <div class="row"><button data-s="try/yuurei-b.mp3">B</button><span class="desc">うめき声入りの下降音（高い）</span></div>
+  <div class="row"><button data-s="try/yuurei-c.mp3">C</button><span class="desc">風のファーン（低い）</span></div>
+  <div class="row"><button data-s="try/yuurei-d.mp3">D</button><span class="desc">ひゅ～（風）＋どろどろ（太鼓のロール）・別素材版</span></div>
+  <div class="row"><button data-s="sfx/yuurei.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+</section>
+
+<section>
+  <h2>炎</h2>
+  <p class="now">「燃えている音」と「燃え上がる音」で印象が変わります。</p>
+  <div class="row"><button data-s="try/honoo-a.mp3">A</button><span class="desc">パチパチ燃えている</span></div>
+  <div class="row"><button data-s="try/honoo-b.mp3">B</button><span class="desc">ボッと燃え上がる</span></div>
+  <div class="row"><button data-s="try/honoo-c.mp3">C</button><span class="desc">大きくゴォーッと吹き上がる</span></div>
+  <div class="row"><button data-s="try/honoo-d.mp3">D</button><span class="desc">たき火がはぜる</span></div>
+  <div class="row"><button data-s="sfx/honoo.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+</section>
+
+<section>
+  <h2>タンバリン</h2>
+  <p class="now">単発か，リズムのパターンか，シャッと振るか。</p>
+  <div class="row"><button data-s="try/tam-a.mp3">A</button><span class="desc">小型・リズムパターン</span></div>
+  <div class="row"><button data-s="try/tam-b.mp3">B</button><span class="desc">大型・リズムパターン</span></div>
+  <div class="row"><button data-s="try/tam-c.mp3">C</button><span class="desc">モンキータンバリン・リズムパターン</span></div>
+  <div class="row"><button data-s="try/tam-d.mp3">D</button><span class="desc">シャッと一回振る</span></div>
+  <div class="row"><button data-s="try/tam-e.mp3">E</button><span class="desc">ロール（シャラララ…）</span></div>
+  <div class="row"><button data-s="sfx/tambourine.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+</section>
+
+<button class="stop" id="stop">音を止める</button>
+
+<script>
+var cur = null, curBtn = null;
+function play(src, btn) {
+  if (cur) { cur.pause(); cur.currentTime = 0; }
+  if (curBtn) curBtn.classList.remove("on");
+  cur = new Audio(src + "?t=" + Date.now());
+  cur.play();
+  curBtn = btn; btn.classList.add("on");
+  cur.onended = function () { btn.classList.remove("on"); };
+}
+document.querySelectorAll("button[data-s]").forEach(function (b) {
+  b.addEventListener("click", function () { play(b.dataset.s, b); });
+});
+document.getElementById("stop").addEventListener("click", function () {
+  if (cur) { cur.pause(); cur.currentTime = 0; }
+  if (curBtn) curBtn.classList.remove("on");
+});
+</script>
+</body>
+</html>
