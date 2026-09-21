@@ -102,7 +102,7 @@ let active = [];
 function loadSound(id) {
   if (buffers.has(id)) return Promise.resolve(buffers.get(id));
   if (pending.has(id)) return pending.get(id);
-  const p = fetch(`sfx/${id}.mp3`)
+  const p = fetch(`sfx/${id}.mp3?v=${window.ASSET_VER}`)
     .then((r) => { if (!r.ok) throw new Error(r.status); return r.arrayBuffer(); })
     .then((ab) => ctx.decodeAudioData(ab))
     .then((buf) => { buffers.set(id, buf); pending.delete(id); return buf; })
