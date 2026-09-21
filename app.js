@@ -53,7 +53,7 @@ function load() {
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 function encodeState() {
-  const bytes = [6, state.cols, state.rows];
+  const bytes = [7, state.cols, state.rows];
   for (const id of state.slots) bytes.push(id ? byId.get(id) + 1 : 0);
   let out = "";
   for (let i = 0; i < bytes.length; i += 3) {
@@ -77,7 +77,7 @@ function decodeHash(str) {
     for (let j = 0; j < take - 1; j++) bytes.push((n >> (16 - j * 8)) & 255);
   }
   // 音の並びが変わると番号の意味が変わるので，旧版のURLは受け付けない
-  if (bytes[0] !== 6) return null;
+  if (bytes[0] !== 7) return null;
   const cols = bytes[1], rows = bytes[2];
   if (cols < 1 || cols > MAX || rows < 1 || rows > MAX) return null;
   const slots = [];

@@ -33,13 +33,13 @@
 | クイズ（10） | ピンポン／ざんねん／ジャカジャン／ドラムロール／合格／早おし |
 | もりあげ（9） | ファンファーレ／エアホーン／花火／はくしゅ／かんせい／当せんベル |
 | アクセント（7） | キラーン／シャキーン／チーン／ひらめき／てんし |
-| リアクション（13） | びっくり／ガーン／さけび声／わらい声／なんでやねん／ピー／ピロピロ／ゆうれい |
+| リアクション（12） | びっくり／ガーン／さけび声／わらい声／なんでやねん／ピー／ピロピロ |
 | あいず（12） | 学校のチャイム／時報／ゴング／ゴーン（寺の鐘）／ホイッスル／カウントダウン／チクタク |
 | うごき（10） | 炎／かみなり／かぜ／バキュン／ばくはつ／ブレーキ／でんげき |
 | ばめん（9） | ばめん展開／きえる／ワープ／へんしん／レトロ |
 | ゲーム（12） | ジャンプ／コイン／パワーアップ／１UP／ステージクリア／たからばこ |
 | 和（7） | ポクポク（木魚）／小鼓／イヨー／さんじょう／ひょうしぎ／ほら貝 |
-| ネタ（11） | ネコ／イヌ／トラ／カラス／ウグイス／カメラ／ブゥー |
+| ネタ（12） | ネコ／イヌ／トラ／ニワトリ／カラス／ウグイス／カメラ／タンバリン／ブゥー |
 
 ## 教室での使いどころ
 
@@ -55,15 +55,14 @@
 - **効果音：[魔王魂](https://maou.audio)**（「バキュン」「イヌ」「トラ」「さけび声」「なんでやねん」の5音）
 - **効果音：[Freesound](https://freesound.org)**（すべてCC0 / パブリックドメイン）
   - エアホーン：[Airhorn by jacksonacademyashmore](https://freesound.org/people/jacksonacademyashmore/sounds/414208/)
-  - 炎：[fire-whoosh.wav by hnhnh](https://freesound.org/people/hnhnh/sounds/244926/)
+  - 炎：[Flame Burst by magnuswaker](https://freesound.org/people/magnuswaker/sounds/592572/)
   - 花火：[Fireworks3 by vialgames](https://freesound.org/people/vialgames/sounds/736643/)
   - ブレーキ：[Tires Squeaking.aif by RutgerMuller](https://freesound.org/people/RutgerMuller/sounds/104026/)
   - ネコ：[cat meow by tuberatanka](https://freesound.org/people/tuberatanka/sounds/110011/)
-  - わらい声：[Hysterical Laughter by Sirkoto51](https://freesound.org/people/Sirkoto51/sounds/274153/)
-  - ゴーン：[Montbell (Bonshō) von Japan by Vurca](https://freesound.org/people/Vurca/sounds/397352/)
-  - ホイッスル：[Referee whistle sound.wav by Rosa-Orenes256](https://freesound.org/people/Rosa-Orenes256/sounds/538422/)
-  - ゆうれい：[wind whistling spooky haunted howling by squashy555](https://freesound.org/people/squashy555/sounds/331892/)
-    ＋[Timpani Roll kevinsticks.aif by hallkev](https://freesound.org/people/hallkev/sounds/428611/)
+  - ニワトリ：[Rooster crows in a farm by nomadas](https://freesound.org/people/nomadas/sounds/623796/)
+  - わらい声：[Laughter by schots](https://freesound.org/people/schots/sounds/452750/)
+  - ゴーン：[temple_bell_002.wav by tec_studio](https://freesound.org/people/tec_studio/sounds/668647/)
+  - ホイッスル：[Referee whistle blow, gymnasium.wav by SpliceSound](https://freesound.org/people/SpliceSound/sounds/218318/)
 - **「イヨー」「１UP」：鈴木優太**（本人が録音・作成したもの）
 - **アイコン：[Lucide](https://lucide.dev)**（ISC License）
 
@@ -74,10 +73,10 @@
 
 - 長すぎる音（学校のチャイム，拍手，サイレンなど）を教室で使いやすい長さに短縮し，末尾にフェードをかけています
 - 「エアホーン」は連打して「ポン，ポン，ポーン」と鳴らせるよう，一発を0.70秒に切り詰めています
-- 「ゆうれい」は「ひゅ～」（風）と「どろどろ」（ティンパニのロール）の2素材をつないで作っています
 - 「ジャンプ」「コイン」「パワーアップ」の3音は，このアプリ用に合成したチップチューンです
   （素材配布元・ゲーム会社とは無関係の自作音です）
 - 「ピー」「ピロピロ」は自主規制音です。もともと電子的な信号音なので，正弦波から合成しています
+- 「イヨー」「１UP」は鈴木優太が録音・作成した音源を，前後の無音を切って音量をそろえたものです
 
 このアプリを再配布・改変する場合も，上記のクレジット表記を残してください。
 
@@ -99,7 +98,7 @@
   `catalog.js` に持たせています
 - 共有URLは「列数・行数・各マスの音番号」をbase64urlに詰めたもの（8×8でも90文字程度）
 - 共有URLの先頭にはバージョン番号を持たせ，音の入れ替えで番号の意味が変わったときは
-  古いURLを読み込まない設計です（誤って別の音が鳴るのを防ぐため）。現在はバージョン6
-- CSS・JS・MP3の読み込みには `?v=8` を付けています。音を差し替えたときは
+  古いURLを読み込まない設計です（誤って別の音が鳴るのを防ぐため）。現在はバージョン7
+- CSS・JS・MP3の読み込みには `?v=9` を付けています。音を差し替えたときは
   `index.html` の `ASSET_VER` と各タグの `v` の数字を上げてください。
   上げないと，一度開いたことのある端末でブラウザのキャッシュが残り，前の音が鳴り続けます
