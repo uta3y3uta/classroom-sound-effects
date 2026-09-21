@@ -3,601 +3,78 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#05060f">
-<meta name="description" content="ボタンを押すだけで効果音が鳴る，授業を盛り上げる教室用アプリ。">
+<meta name="theme-color" content="#0a0a0c">
+<meta name="description" content="ボタンを押すだけで効果音が鳴る，授業を盛り上げる教室用サウンドボード。">
 <title>教室効果音アプリ</title>
-<style>
-  :root{
-    --bg:#05060f;
-    --panel:#0c0f22;
-  }
-  *{box-sizing:border-box;margin:0;padding:0;}
-  html,body{height:100%;}
-  body{
-    background:
-      radial-gradient(1200px 600px at 20% -10%, #1b1040 0%, transparent 60%),
-      radial-gradient(900px 500px at 100% 110%, #06283d 0%, transparent 60%),
-      var(--bg);
-    color:#e8f6ff;
-    font-family:"Hiragino Kaku Gothic ProN","Yu Gothic UI","Meiryo",system-ui,sans-serif;
-    display:flex;flex-direction:column;
-    min-height:100dvh;
-    padding:env(safe-area-inset-top) 10px calc(env(safe-area-inset-bottom) + 6px);
-    -webkit-user-select:none;user-select:none;
-    -webkit-tap-highlight-color:transparent;
-    touch-action:manipulation;
-    overflow:hidden;
-  }
-
-  header{text-align:center;padding:10px 0 8px;flex:0 0 auto;}
-  h1{
-    font-size:clamp(17px,4.6vw,26px);
-    font-weight:800;letter-spacing:.14em;
-    color:#fff;
-    text-shadow:0 0 6px #00eaff,0 0 16px #00a2ff,0 0 32px #7a00ff;
-  }
-  .sub{
-    margin-top:4px;font-size:clamp(9px,2.5vw,12px);
-    letter-spacing:.22em;color:#6ee7ff;opacity:.72;
-  }
-
-  main{
-    flex:1 1 auto;
-    display:grid;
-    grid-template-columns:repeat(4,1fr);
-    grid-template-rows:repeat(4,1fr);
-    gap:clamp(6px,1.7vw,12px);
-    max-width:620px;width:100%;margin:0 auto;
-    min-height:0;
-  }
-
-  .pad{
-    position:relative;
-    border:none;border-radius:16px;
-    background:linear-gradient(160deg,rgba(255,255,255,.22),rgba(255,255,255,.04) 45%,rgba(0,0,0,.35));
-    color:#fff;font:inherit;cursor:pointer;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:2px;padding:4px 2px;
-    overflow:hidden;
-    outline:2px solid var(--c);
-    outline-offset:-2px;
-    box-shadow:0 0 12px var(--c),0 0 26px color-mix(in srgb,var(--c) 45%,transparent),inset 0 0 18px rgba(255,255,255,.08);
-    transition:transform .07s ease,box-shadow .12s ease,filter .12s ease;
-  }
-  .pad::before{
-    content:"";position:absolute;inset:0;
-    background:radial-gradient(120% 90% at 50% 0%,color-mix(in srgb,var(--c) 55%,transparent) 0%,transparent 70%);
-    opacity:.55;pointer-events:none;
-  }
-  .pad .ico{font-size:clamp(20px,6.2vw,34px);line-height:1.1;position:relative;filter:drop-shadow(0 0 5px rgba(0,0,0,.5));}
-  .pad .name{
-    font-size:clamp(9px,2.55vw,14px);font-weight:800;letter-spacing:.02em;
-    position:relative;text-shadow:0 1px 3px rgba(0,0,0,.8),0 0 10px var(--c);
-    white-space:nowrap;
-  }
-  .pad:active,.pad.on{
-    transform:scale(.94);
-    filter:brightness(1.45);
-    box-shadow:0 0 22px var(--c),0 0 48px var(--c),inset 0 0 26px rgba(255,255,255,.3);
-  }
-
-  footer{
-    flex:0 0 auto;
-    margin:10px auto 0;max-width:620px;width:100%;
-    display:flex;align-items:center;gap:10px;
-    background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
-    border:1px solid rgba(110,231,255,.28);
-    border-radius:16px;padding:9px 12px;
-    box-shadow:0 0 16px rgba(0,180,255,.18) inset;
-  }
-  .ctrl{
-    flex:0 0 auto;width:46px;height:46px;border-radius:13px;
-    border:1px solid rgba(255,255,255,.28);
-    background:rgba(255,255,255,.07);
-    color:#e8f6ff;font-size:20px;cursor:pointer;
-    display:flex;align-items:center;justify-content:center;
-    transition:all .12s ease;
-  }
-  .ctrl:active{transform:scale(.92);}
-  #mute.muted{
-    background:rgba(255,45,100,.22);border-color:#ff2d64;color:#ff8fae;
-    box-shadow:0 0 14px rgba(255,45,100,.55);
-  }
-  #stop{border-color:rgba(255,196,0,.5);color:#ffd45e;box-shadow:0 0 10px rgba(255,196,0,.25);}
-
-  .slider-wrap{flex:1 1 auto;display:flex;flex-direction:column;gap:3px;min-width:0;}
-  .slider-label{
-    display:flex;justify-content:space-between;
-    font-size:10px;letter-spacing:.14em;color:#7fd9ff;opacity:.85;
-  }
-  input[type=range]{
-    -webkit-appearance:none;appearance:none;
-    width:100%;height:10px;border-radius:99px;background:transparent;
-  }
-  input[type=range]::-webkit-slider-runnable-track{
-    height:10px;border-radius:99px;
-    background:linear-gradient(90deg,#00eaff 0%,#7a5cff var(--p,80%),rgba(255,255,255,.14) var(--p,80%));
-    box-shadow:0 0 12px rgba(0,200,255,.5);
-  }
-  input[type=range]::-moz-range-track{height:10px;border-radius:99px;background:rgba(255,255,255,.14);}
-  input[type=range]::-moz-range-progress{height:10px;border-radius:99px;background:linear-gradient(90deg,#00eaff,#7a5cff);}
-  input[type=range]::-webkit-slider-thumb{
-    -webkit-appearance:none;width:24px;height:24px;border-radius:50%;
-    background:radial-gradient(circle at 35% 30%,#ffffff,#8ae9ff 55%,#0091ff);
-    border:2px solid #fff;margin-top:-7px;
-    box-shadow:0 0 12px #00eaff,0 0 22px #0091ff;cursor:pointer;
-  }
-  input[type=range]::-moz-range-thumb{
-    width:22px;height:22px;border-radius:50%;border:2px solid #fff;
-    background:#8ae9ff;box-shadow:0 0 12px #00eaff;cursor:pointer;
-  }
-  body.muted-mode .slider-wrap{opacity:.4;}
-
-  @media (orientation:landscape) and (max-height:520px){
-    header{padding:4px 0 2px;}
-    .sub{display:none;}
-    footer{padding:5px 10px;}
-    .ctrl{width:38px;height:38px;font-size:17px;}
-  }
-</style>
+<link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body data-mode="play">
 
-<header>
-  <h1>教室効果音アプリ</h1>
-  <div class="sub">TAP TO PLAY</div>
-</header>
-
-<main id="grid"></main>
-
-<footer>
-  <button class="ctrl" id="mute" aria-label="ミュート切り替え">🔊</button>
-  <div class="slider-wrap">
-    <div class="slider-label"><span>VOLUME</span><span id="volNum">80%</span></div>
-    <input type="range" id="vol" min="0" max="100" value="80" aria-label="音量">
+<div class="top">
+  <div class="brand">
+    <span class="mark">SOUND BOX</span>
+    <span class="sub">教室効果音</span>
   </div>
-  <button class="ctrl" id="stop" aria-label="音を止める">⏹</button>
-</footer>
+  <div class="spacer"></div>
+  <div class="seg" role="tablist">
+    <button role="tab" data-mode="play" aria-selected="true" data-icon="play"><span class="gi"></span>使う</button>
+    <button role="tab" data-mode="edit" aria-selected="false" data-icon="sliders-horizontal"><span class="gi"></span>つくる</button>
+  </div>
+  <button class="icon-btn" id="share" title="共有URLを発行" data-icon="share-2"></button>
+</div>
 
-<script>
-(() => {
-  "use strict";
+<div class="editbar">
+  <span class="lbl">ならべかた</span>
+  <div class="stepper">
+    <button id="colMinus" data-icon="minus" aria-label="横を減らす"></button>
+    <span class="val" id="colVal">4</span>
+    <button id="colPlus" data-icon="plus" aria-label="横を増やす"></button>
+  </div>
+  <span class="lbl">×</span>
+  <div class="stepper">
+    <button id="rowMinus" data-icon="minus" aria-label="縦を減らす"></button>
+    <span class="val" id="rowVal">4</span>
+    <button id="rowPlus" data-icon="plus" aria-label="縦を増やす"></button>
+  </div>
+  <span class="hint" id="padCount"></span>
+  <div class="spacer"></div>
+  <button class="icon-btn" id="resetAll" title="ぜんぶ空にする" data-icon="trash-2"></button>
+</div>
 
-  /* ============ オーディオ基盤 ============ */
-  let ctx, master, dry, wet, noiseBuf;
-  let bDry, bWet;            // 効果音ごとの音量そろえ用
-  let live = [];
+<div class="stage"><div id="grid"></div></div>
 
-  function boot(){
-    if(ctx) return;
-    ctx = new (window.AudioContext || window.webkitAudioContext)();
+<div class="bottom">
+  <button class="icon-btn" id="mute" title="ミュート" data-icon="volume-2"></button>
+  <div class="vol-wrap">
+    <input type="range" id="vol" min="0" max="100" value="80" aria-label="音量">
+    <span id="volNum">80%</span>
+  </div>
+  <button class="icon-btn danger" id="stop" title="音を止める" data-icon="square"></button>
+</div>
 
-    // 音割れ防止のリミッター
-    const limiter = ctx.createDynamicsCompressor();
-    limiter.threshold.value = -6;
-    limiter.knee.value = 0;
-    limiter.ratio.value = 20;
-    limiter.attack.value = 0.003;
-    limiter.release.value = 0.25;
-    limiter.connect(ctx.destination);
+<p class="credit">効果音：<a href="https://otologic.jp" target="_blank" rel="noopener">OtoLogic</a>（CC BY 4.0）／アイコン：<a href="https://lucide.dev" target="_blank" rel="noopener">Lucide</a>（ISC）</p>
 
-    master = ctx.createGain();
-    master.gain.value = 0.8;
-    master.connect(limiter);
+<div class="sheet-bg" id="sheetBg">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-head">
+      <span class="sheet-title" id="sheetTitle">音をえらぶ</span>
+      <div class="spacer"></div>
+      <button class="icon-btn" id="sheetClear" title="このパッドを空にする" data-icon="eraser"></button>
+      <button class="icon-btn" id="sheetClose" title="閉じる" data-icon="check"></button>
+    </div>
+    <label class="search">
+      <span class="gi" data-icon="search"></span>
+      <input type="search" id="q" placeholder="音の名前でさがす" autocomplete="off">
+    </label>
+    <div class="cats" id="cats"></div>
+    <div class="list" id="list"></div>
+  </div>
+</div>
 
-    dry = ctx.createGain();
-    dry.connect(master);
+<div class="toast" id="toast"></div>
 
-    const conv = ctx.createConvolver();
-    conv.buffer = impulse(1.6, 2.6);
-    wet = ctx.createGain();
-    wet.gain.value = 0.32;
-    wet.connect(conv);
-    conv.connect(master);
-
-    const len = ctx.sampleRate * 3;
-    noiseBuf = ctx.createBuffer(1, len, ctx.sampleRate);
-    const d = noiseBuf.getChannelData(0);
-    for(let i=0;i<len;i++) d[i] = Math.random()*2-1;
-  }
-
-  function impulse(sec, decay){
-    const len = Math.floor(ctx.sampleRate * sec);
-    const buf = ctx.createBuffer(2, len, ctx.sampleRate);
-    for(let c=0;c<2;c++){
-      const ch = buf.getChannelData(c);
-      for(let i=0;i<len;i++){
-        ch[i] = (Math.random()*2-1) * Math.pow(1 - i/len, decay);
-      }
-    }
-    return buf;
-  }
-
-  function reg(node, stopAt){
-    live.push(node);
-    node.onended = () => { const i = live.indexOf(node); if(i>=0) live.splice(i,1); };
-  }
-
-  function stopAll(){
-    live.slice().forEach(n => { try{ n.stop(); }catch(e){} });
-    live = [];
-  }
-
-  function sends(gainNode, rev){
-    gainNode.connect(bDry);
-    if(rev){
-      const s = ctx.createGain();
-      s.gain.value = rev;
-      gainNode.connect(s);
-      s.connect(bWet);
-    }
-  }
-
-  /* ============ 音づくりのパーツ ============ */
-
-  // 単音（オシレーター）
-  function tone(o){
-    const t = o.t, dur = o.dur;
-    const osc = ctx.createOscillator();
-    osc.type = o.type || "sine";
-    osc.frequency.setValueAtTime(o.freq, t);
-    if(o.to) osc.frequency.exponentialRampToValueAtTime(o.to, t + (o.glide || dur));
-    if(o.detune) osc.detune.value = o.detune;
-
-    const g = ctx.createGain();
-    const atk = o.atk ?? 0.006;
-    const peak = o.gain ?? 0.25;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(peak, t + atk);
-    if(o.hold) g.gain.setValueAtTime(peak, t + o.hold);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-
-    let last = g;
-    if(o.lp){
-      const f = ctx.createBiquadFilter();
-      f.type = "lowpass";
-      f.frequency.setValueAtTime(o.lp, t);
-      if(o.lpTo) f.frequency.exponentialRampToValueAtTime(o.lpTo, t + dur*0.6);
-      g.connect(f); last = f;
-    }
-    if(o.vib){
-      const lfo = ctx.createOscillator(), la = ctx.createGain();
-      lfo.frequency.value = 5.5; la.gain.value = o.vib;
-      lfo.connect(la); la.connect(osc.detune);
-      lfo.start(t); lfo.stop(t+dur+0.05); reg(lfo);
-    }
-
-    osc.connect(g);
-    sends(last, o.rev ?? 0.18);
-    osc.start(t); osc.stop(t + dur + 0.06);
-    reg(osc);
-  }
-
-  // ノイズ（打楽器・歓声・拍手）
-  function noise(o){
-    const t = o.t, dur = o.dur;
-    const src = ctx.createBufferSource();
-    src.buffer = noiseBuf;
-    src.loop = true;
-    src.playbackRate.value = 0.8 + Math.random()*0.4;
-
-    const f = ctx.createBiquadFilter();
-    f.type = o.filter || "bandpass";
-    f.frequency.setValueAtTime(o.freq || 1200, t);
-    if(o.to) f.frequency.exponentialRampToValueAtTime(o.to, t + dur);
-    f.Q.value = o.q ?? 1;
-
-    const g = ctx.createGain();
-    const peak = o.gain ?? 0.25;
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(peak, t + (o.atk ?? 0.004));
-    if(o.hold) g.gain.setValueAtTime(peak, t + o.hold);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-
-    src.connect(f); f.connect(g);
-    sends(g, o.rev ?? 0.2);
-    src.start(t); src.stop(t + dur + 0.05);
-    reg(src);
-  }
-
-  // 金属的な鐘（FM）
-  function bell(freq, t, dur, gain, ratio){
-    const car = ctx.createOscillator();
-    car.frequency.value = freq;
-    const mod = ctx.createOscillator();
-    mod.frequency.value = freq * (ratio || 2.76);
-    const mg = ctx.createGain();
-    mg.gain.setValueAtTime(freq * 2.2, t);
-    mg.gain.exponentialRampToValueAtTime(1, t + dur * 0.5);
-    mod.connect(mg); mg.connect(car.frequency);
-
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.0001, t);
-    g.gain.linearRampToValueAtTime(gain, t + 0.005);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-
-    car.connect(g);
-    sends(g, 0.45);
-    mod.start(t); mod.stop(t+dur+0.05);
-    car.start(t); car.stop(t+dur+0.05);
-    reg(mod); reg(car);
-  }
-
-  // 金管楽器っぽい音（ファンファーレ用）
-  function brass(freq, t, dur, gain){
-    gain = gain ?? 0.16;
-    [-8, 0, 8].forEach(det => {
-      tone({type:"sawtooth", freq, t, dur, gain:gain/1.6, detune:det,
-            atk:0.03, hold:dur*0.55, lp:900, lpTo:3400, rev:0.3});
-    });
-    tone({type:"sine", freq:freq/2, t, dur, gain:gain*0.5, atk:0.03, hold:dur*0.5, rev:0.2});
-  }
-
-  // 太鼓／バスドラム
-  function boom(t, hi, lo, dur, gain){
-    tone({type:"sine", freq:hi, to:lo, glide:dur*0.35, t, dur, gain, atk:0.002, rev:0.22});
-    noise({t, dur:0.12, freq:450, filter:"lowpass", gain:gain*0.5, rev:0.15});
-  }
-
-  // シンバルクラッシュ
-  function crash(t, dur, gain){
-    noise({t, dur, freq:1200, to:6000, filter:"highpass", gain, q:0.5, rev:0.5});
-    noise({t, dur:dur*0.7, freq:7000, filter:"highpass", gain:gain*0.6, rev:0.4});
-  }
-
-  /* ============ 16の効果音 ============ */
-  const SOUNDS = {
-
-    // 1 ドラムロール
-    drumroll(t){
-      let x = t, step = 0.085;
-      for(let i=0;i<30;i++){
-        const g = 0.08 + 0.26 * (i/29);
-        noise({t:x, dur:0.07, freq:1900, q:0.9, gain:g, rev:0.12});
-        tone({type:"triangle", freq:190, t:x, dur:0.05, gain:g*0.45, rev:0.1});
-        x += step;
-        step = Math.max(0.028, step*0.945);
-      }
-      crash(x, 1.6, 0.34);
-      boom(x, 150, 45, 0.8, 0.5);
-    },
-
-    // 2 ジャジャーン
-    jajan(t){
-      const ch = [196, 233, 294, 392, 466];
-      ch.forEach(f => brass(f, t, 0.26, 0.15));
-      boom(t, 160, 50, 0.4, 0.45);
-      const t2 = t + 0.34;
-      ch.forEach(f => brass(f, t2, 1.7, 0.17));
-      brass(587, t2, 1.7, 0.13);
-      crash(t2, 1.8, 0.3);
-      boom(t2, 170, 45, 1.0, 0.55);
-    },
-
-    // 3 ピンポーン（正解）
-    correct(t){
-      bell(1318.5, t, 0.9, 0.32, 2.0);
-      tone({type:"sine", freq:1318.5, t, dur:0.7, gain:0.2, rev:0.35});
-      bell(987.8, t+0.27, 1.5, 0.32, 2.0);
-      tone({type:"sine", freq:987.8, t:t+0.27, dur:1.2, gain:0.2, rev:0.35});
-    },
-
-    // 4 ブー（不正解）
-    wrong(t){
-      const buzz = (t0, dur) => {
-        [138, 142, 208].forEach(f => {
-          tone({type:"square", freq:f, t:t0, dur, gain:0.12, atk:0.01,
-                hold:dur*0.6, lp:900, rev:0.12});
-        });
-      };
-      buzz(t, 0.28);
-      buzz(t+0.4, 0.62);
-    },
-
-    // 5 ショック（ガーン）
-    shock(t){
-      crash(t, 1.4, 0.3);
-      [233, 246, 349].forEach(f => {
-        tone({type:"sawtooth", freq:f, to:f*0.45, glide:1.5, t, dur:1.9,
-              gain:0.11, atk:0.01, lp:2200, lpTo:400, rev:0.4});
-      });
-      tone({type:"sine", freq:90, to:40, t, dur:1.9, gain:0.4, rev:0.3});
-    },
-
-    // 6 ジャンプ（ポイン）
-    jump(t){
-      tone({type:"square", freq:330, to:1180, glide:0.11, t, dur:0.18,
-            gain:0.2, atk:0.004, rev:0.08});
-      tone({type:"square", freq:660, to:2360, glide:0.11, t, dur:0.15,
-            gain:0.06, rev:0.05});
-    },
-
-    // 7 コイン（チャリン）
-    coin(t){
-      tone({type:"square", freq:987.8, t, dur:0.09, gain:0.18, rev:0.1});
-      tone({type:"square", freq:1318.5, t:t+0.08, dur:0.62, gain:0.18, hold:0.25, rev:0.25});
-      bell(2637, t+0.08, 0.5, 0.07, 3.1);
-    },
-
-    // 8 1UP（レベルアップ）
-    oneup(t){
-      const mel = [659.3, 784, 1046.5, 1318.5, 1568, 2093];
-      mel.forEach((f,i) => {
-        tone({type:"square", freq:f, t:t+i*0.095, dur:i===5?0.45:0.13,
-              gain:0.17, atk:0.004, rev:0.14});
-      });
-    },
-
-    // 9 テッテレー（ネタばらし）
-    tetere(t){
-      const seq = [[587.3,0,0.13],[587.3,0.16,0.13],[698.5,0.32,0.13],[880,0.48,0.75]];
-      seq.forEach(([f,d,len]) => brass(f, t+d, len, 0.2));
-      seq.forEach(([f,d,len]) => {
-        tone({type:"square", freq:f*2, t:t+d, dur:len*0.8, gain:0.04, rev:0.2});
-      });
-      tone({type:"sawtooth", freq:880, t:t+0.48, dur:0.75, gain:0.07,
-            vib:28, atk:0.05, hold:0.4, lp:3000, rev:0.3});
-    },
-
-    // 10 キラーン
-    sparkle(t){
-      tone({type:"sine", freq:1600, to:5200, glide:0.4, t, dur:0.55,
-            gain:0.12, atk:0.02, rev:0.5});
-      [2637, 3136, 3951, 4699, 5274].forEach((f,i) => {
-        bell(f, t + 0.06*i, 1.3 - i*0.12, 0.11, 3.4);
-      });
-      noise({t:t+0.1, dur:0.9, freq:6000, to:11000, filter:"highpass",
-             gain:0.05, rev:0.6});
-    },
-
-    // 11 歓声（わー！）
-    cheer(t){
-      noise({t, dur:2.6, freq:900, filter:"bandpass", q:0.6,
-             gain:0.22, atk:0.45, hold:1.5, rev:0.5});
-      noise({t, dur:2.6, freq:2600, filter:"highpass",
-             gain:0.06, atk:0.5, hold:1.4, rev:0.5});
-      for(let i=0;i<9;i++){
-        const f = 260 + Math.random()*420;
-        tone({type:"sawtooth", freq:f, to:f*(1.1+Math.random()*0.35), glide:0.9,
-              t:t + Math.random()*0.7, dur:1.4 + Math.random(),
-              gain:0.035, atk:0.25, vib:22, lp:1500, rev:0.5});
-      }
-      for(let i=0;i<26;i++){
-        noise({t:t + 0.3 + Math.random()*2.0, dur:0.05,
-               freq:1400 + Math.random()*1600, q:0.8,
-               gain:0.05 + Math.random()*0.05, rev:0.4});
-      }
-    },
-
-    // 12 表彰式
-    award(t){
-      const mel = [[392,0,0.3],[523.3,0.3,0.3],[659.3,0.6,0.3],[784,0.9,1.9]];
-      mel.forEach(([f,d,len]) => brass(f, t+d, len, 0.2));
-      [392, 523.3, 659.3].forEach(f => brass(f, t+0.9, 1.9, 0.12));
-      boom(t, 120, 55, 0.6, 0.35);
-      boom(t+0.9, 130, 50, 1.1, 0.45);
-      crash(t+0.9, 1.9, 0.18);
-    },
-
-    // 13 ファンファーレ
-    fanfare(t){
-      const mel = [[523.3,0,0.14],[523.3,0.15,0.14],[523.3,0.3,0.14],
-                   [659.3,0.45,0.42],[523.3,0.9,0.16],[659.3,1.06,0.2],[784,1.3,1.5]];
-      mel.forEach(([f,d,len]) => brass(f, t+d, len, 0.21));
-      [[392,0.45,0.42],[523.3,1.3,1.5],[659.3,1.3,1.5],[1046.5,1.3,1.5]]
-        .forEach(([f,d,len]) => brass(f, t+d, len, 0.12));
-      let x = t, step = 0.06;
-      for(let i=0;i<20;i++){
-        noise({t:x, dur:0.06, freq:1900, q:0.9, gain:0.06 + i*0.006, rev:0.15});
-        x += step;
-      }
-      boom(t+1.3, 160, 50, 1.2, 0.5);
-      crash(t+1.3, 2.0, 0.26);
-    },
-
-    // 14 チーン（時間切れ）
-    chime(t){
-      bell(1046.5, t, 3.0, 0.3, 2.76);
-      bell(1568, t+0.01, 2.2, 0.12, 3.9);
-      tone({type:"sine", freq:523.3, t, dur:3.2, gain:0.1, rev:0.6});
-    },
-
-    // 15 拍手
-    clap(t){
-      for(let i=0;i<46;i++){
-        const p = i/45;
-        const when = t + Math.pow(p, 0.85) * 2.2 + Math.random()*0.05;
-        const env = Math.sin(Math.PI * Math.min(1, p*1.15));
-        noise({t:when, dur:0.055, freq:1300 + Math.random()*1500, q:0.7,
-               gain:(0.07 + Math.random()*0.07) * (0.4 + env*0.6), rev:0.35});
-      }
-      noise({t, dur:2.4, freq:2200, filter:"bandpass", q:0.4,
-             gain:0.05, atk:0.3, hold:1.3, rev:0.5});
-    },
-
-    // 16 和太鼓（ドン）
-    taiko(t){
-      boom(t, 180, 42, 1.1, 0.6);
-      tone({type:"sine", freq:62, t, dur:1.3, gain:0.28, rev:0.3});
-      noise({t, dur:0.2, freq:900, filter:"lowpass", gain:0.18, rev:0.2});
-    }
-  };
-
-  /* ============ ボタン定義 ============ */
-  const PADS = [
-    {k:"drumroll", n:"ドラムロール", i:"🥁", c:"#ff2d95"},
-    {k:"jajan",    n:"ジャジャーン", i:"⚡", c:"#b14cff"},
-    {k:"correct",  n:"ピンポーン",   i:"⭕", c:"#00e5ff"},
-    {k:"wrong",    n:"ブー",         i:"❌", c:"#ff3b3b"},
-
-    {k:"shock",    n:"ガーン",       i:"😱", c:"#7a5cff"},
-    {k:"jump",     n:"ジャンプ",     i:"🦘", c:"#00ff9d"},
-    {k:"coin",     n:"コイン",       i:"🪙", c:"#ffd400"},
-    {k:"oneup",    n:"1UP",          i:"🍄", c:"#ff7a00"},
-
-    {k:"tetere",   n:"テッテレー",   i:"🎺", c:"#ff59c7"},
-    {k:"sparkle",  n:"キラーン",     i:"✨", c:"#4dd2ff"},
-    {k:"cheer",    n:"歓声",         i:"🙌", c:"#ff9500"},
-    {k:"award",    n:"表彰式",       i:"🏆", c:"#ffc400"},
-
-    {k:"fanfare",  n:"ファンファーレ", i:"📯", c:"#00ffc8"},
-    {k:"chime",    n:"チーン",       i:"⏳", c:"#8affd6"},
-    {k:"clap",     n:"拍手",         i:"👏", c:"#ff6eb4"},
-    {k:"taiko",    n:"和太鼓",       i:"🪘", c:"#ff4d00"}
-  ];
-
-  const grid = document.getElementById("grid");
-  PADS.forEach(p => {
-    const b = document.createElement("button");
-    b.className = "pad";
-    b.style.setProperty("--c", p.c);
-    b.innerHTML = `<span class="ico">${p.i}</span><span class="name">${p.n}</span>`;
-    b.addEventListener("pointerdown", e => { e.preventDefault(); play(p.k, b); });
-    grid.appendChild(b);
-  });
-
-  // 効果音どうしの聞こえる大きさをそろえる係数
-  const LEVEL = {
-    drumroll:0.8, jajan:0.40, correct:1.35, wrong:1.8,
-    shock:0.85, jump:3.2, coin:2.8, oneup:4.1,
-    tetere:2.0, sparkle:2.5, cheer:3.2, award:0.65,
-    fanfare:0.62, chime:1.35, clap:7.3, taiko:0.79
-  };
-
-  function play(key, btn){
-    boot();
-    if(ctx.state === "suspended") ctx.resume();
-    btn.classList.add("on");
-    setTimeout(() => btn.classList.remove("on"), 130);
-
-    const lv = LEVEL[key] ?? 1;
-    bDry = ctx.createGain(); bDry.gain.value = lv; bDry.connect(dry);
-    bWet = ctx.createGain(); bWet.gain.value = lv; bWet.connect(wet);
-
-    SOUNDS[key](ctx.currentTime + 0.03);
-  }
-
-  /* ============ 音量・ミュート・停止 ============ */
-  const vol = document.getElementById("vol");
-  const volNum = document.getElementById("volNum");
-  const muteBtn = document.getElementById("mute");
-  let muted = false;
-
-  function apply(){
-    const v = muted ? 0 : Number(vol.value)/100;
-    if(master) master.gain.setTargetAtTime(v, ctx.currentTime, 0.02);
-    volNum.textContent = vol.value + "%";
-    vol.style.setProperty("--p", vol.value + "%");
-    muteBtn.textContent = muted ? "🔇" : (Number(vol.value) === 0 ? "🔈" : "🔊");
-    muteBtn.classList.toggle("muted", muted);
-    document.body.classList.toggle("muted-mode", muted);
-  }
-
-  vol.addEventListener("input", () => { boot(); muted = false; apply(); });
-  muteBtn.addEventListener("click", () => { boot(); muted = !muted; apply(); });
-  document.getElementById("stop").addEventListener("click", () => { if(ctx) stopAll(); });
-  apply();
-})();
-</script>
+<script src="icons.js"></script>
+<script src="catalog.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
