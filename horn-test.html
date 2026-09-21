@@ -26,7 +26,7 @@ const LIST = [
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const buf = {}, cur = {};
 for (const [id, label, note] of LIST) {
-  const url = id === "now" ? "sfx/horn.mp3" : "sfx/_horn_" + id + ".mp3";
+  const url = id === "now" ? "sfx/horn.mp3" : "sfx/horn-" + id + ".mp3";
   fetch(url).then(r => r.arrayBuffer()).then(a => ctx.decodeAudioData(a)).then(d => buf[id] = d);
   const el = document.createElement("button");
   el.innerHTML = label + "<small>" + note + "</small>";
