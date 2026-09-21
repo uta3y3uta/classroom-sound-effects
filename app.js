@@ -4,7 +4,7 @@
 const SOUNDS = window.SOUNDS, CATS = window.CATS, ICONS = window.ICONS;
 const byId = new Map(SOUNDS.map((s, i) => [s.i, i]));
 const catColor = new Map(CATS.map((c) => [c.id, c.color]));
-const MAX = 8, STORE = "soundbox.v2";
+const MAX = 8, STORE = "kyoshitsu-se.v3";
 const $ = (s) => document.querySelector(s);
 
 /* ---------- アイコン ---------- */
@@ -21,7 +21,7 @@ for (const el of document.querySelectorAll("[data-icon]")) {
 
 /* ---------- 状態 ---------- */
 const DEFAULT = ["drumroll","jajaan","seikai","fuseikai","fanfare","tettere","hakushu","kansei",
-                 "kiraan","shakiin","chiin","hirameki","bikkuri","gaan","dedeen","chime_school"];
+                 "horn","kiraan","shakiin","chiin","coin","bikkuri","gaan","dedeen"];
 let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false };
 
 function clampState(s) {
@@ -53,7 +53,7 @@ function load() {
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 function encodeState() {
-  const bytes = [1, state.cols, state.rows];
+  const bytes = [2, state.cols, state.rows];
   for (const id of state.slots) bytes.push(id ? byId.get(id) + 1 : 0);
   let out = "";
   for (let i = 0; i < bytes.length; i += 3) {
@@ -76,7 +76,8 @@ function decodeHash(str) {
     }
     for (let j = 0; j < take - 1; j++) bytes.push((n >> (16 - j * 8)) & 255);
   }
-  if (bytes[0] !== 1) return null;
+  // 音の並びが変わると番号の意味が変わるので，旧版のURLは受け付けない
+  if (bytes[0] !== 2) return null;
   const cols = bytes[1], rows = bytes[2];
   if (cols < 1 || cols > MAX || rows < 1 || rows > MAX) return null;
   const slots = [];

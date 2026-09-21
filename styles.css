@@ -45,10 +45,6 @@ svg{display:block;}
   font-size:13px;font-weight:700;letter-spacing:.18em;
   color:var(--text);white-space:nowrap;
 }
-.brand .sub{
-  font-size:10px;letter-spacing:.2em;color:var(--text-faint);
-  white-space:nowrap;
-}
 .spacer{flex:1 1 auto;}
 
 /* モード切り替え（セグメント） */
@@ -327,6 +323,5 @@ body[data-mode="edit"] .editbar{display:flex;}
 .toast.show{opacity:1;transform:translate(-50%,0);}
 
 @media (max-width:420px){
-  .brand .sub{display:none;}
   .seg button{padding:6px 10px;}
 }
