@@ -165,15 +165,25 @@
 
   /* ============ オーディオ基盤 ============ */
   let ctx, master, dry, wet, noiseBuf;
+  let bDry, bWet;            // 効果音ごとの音量そろえ用
   let live = [];
 
   function boot(){
     if(ctx) return;
     ctx = new (window.AudioContext || window.webkitAudioContext)();
 
+    // 音割れ防止のリミッター
+    const limiter = ctx.createDynamicsCompressor();
+    limiter.threshold.value = -6;
+    limiter.knee.value = 0;
+    limiter.ratio.value = 20;
+    limiter.attack.value = 0.003;
+    limiter.release.value = 0.25;
+    limiter.connect(ctx.destination);
+
     master = ctx.createGain();
     master.gain.value = 0.8;
-    master.connect(ctx.destination);
+    master.connect(limiter);
 
     dry = ctx.createGain();
     dry.connect(master);
@@ -214,12 +224,12 @@
   }
 
   function sends(gainNode, rev){
-    gainNode.connect(dry);
+    gainNode.connect(bDry);
     if(rev){
       const s = ctx.createGain();
       s.gain.value = rev;
       gainNode.connect(s);
-      s.connect(wet);
+      s.connect(bWet);
     }
   }
 
@@ -546,11 +556,24 @@
     grid.appendChild(b);
   });
 
+  // 効果音どうしの聞こえる大きさをそろえる係数
+  const LEVEL = {
+    drumroll:0.8, jajan:0.40, correct:1.35, wrong:1.8,
+    shock:0.85, jump:3.2, coin:2.8, oneup:4.1,
+    tetere:2.0, sparkle:2.5, cheer:3.2, award:0.65,
+    fanfare:0.62, chime:1.35, clap:7.3, taiko:0.79
+  };
+
   function play(key, btn){
     boot();
     if(ctx.state === "suspended") ctx.resume();
     btn.classList.add("on");
     setTimeout(() => btn.classList.remove("on"), 130);
+
+    const lv = LEVEL[key] ?? 1;
+    bDry = ctx.createGain(); bDry.gain.value = lv; bDry.connect(dry);
+    bWet = ctx.createGain(); bWet.gain.value = lv; bWet.connect(wet);
+
     SOUNDS[key](ctx.currentTime + 0.03);
   }
 
