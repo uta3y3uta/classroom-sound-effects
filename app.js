@@ -53,7 +53,7 @@ function load() {
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
 function encodeState() {
-  const bytes = [5, state.cols, state.rows];
+  const bytes = [6, state.cols, state.rows];
   for (const id of state.slots) bytes.push(id ? byId.get(id) + 1 : 0);
   let out = "";
   for (let i = 0; i < bytes.length; i += 3) {
@@ -77,7 +77,7 @@ function decodeHash(str) {
     for (let j = 0; j < take - 1; j++) bytes.push((n >> (16 - j * 8)) & 255);
   }
   // 音の並びが変わると番号の意味が変わるので，旧版のURLは受け付けない
-  if (bytes[0] !== 5) return null;
+  if (bytes[0] !== 6) return null;
   const cols = bytes[1], rows = bytes[2];
   if (cols < 1 || cols > MAX || rows < 1 || rows > MAX) return null;
   const slots = [];
@@ -116,7 +116,7 @@ function applyVolume() {
   master.gain.setTargetAtTime(v, ctx.currentTime, 0.015);
 }
 
-function play(id, pad) {
+function play(id) {
   if (ctx.state === "suspended") ctx.resume();
   loadSound(id).then((buf) => {
     // 同じ音を連打したとき重なって濁らないよう，前の発音は素早く切る
@@ -138,18 +138,7 @@ function play(id, pad) {
     const rec = { src, g, id };
     active.push(rec);
     src.onended = () => { active = active.filter((a) => a !== rec); };
-    if (pad) indicate(pad, buf.duration);
   }).catch(() => toast("音を読み込めませんでした"));
-}
-
-function indicate(pad, dur) {
-  const bar = pad.querySelector(".bar");
-  if (!bar) return;
-  pad.classList.add("playing");
-  bar.getAnimations().forEach((a) => a.cancel());
-  const anim = bar.animate([{ transform: "scaleX(0)" }, { transform: "scaleX(1)" }],
-    { duration: dur * 1000, easing: "linear" });
-  anim.onfinish = anim.oncancel = () => pad.classList.remove("playing");
 }
 
 function stopAll() {
@@ -159,9 +148,6 @@ function stopAll() {
     try { a.src.stop(t + 0.12); } catch (e) {}
   }
   active = [];
-  document.querySelectorAll(".pad.playing").forEach((p) => {
-    p.querySelector(".bar").getAnimations().forEach((x) => x.cancel());
-  });
 }
 
 /* ---------- グリッド ---------- */
@@ -181,8 +167,7 @@ function renderGrid() {
     pad.innerHTML =
       `<span class="slotno">${i + 1}</span>` +
       `<span class="glyph">${svg(s ? s.ic : "plus")}</span>` +
-      `<span class="cap">${s ? esc(s.n) : "あける"}</span>` +
-      `<span class="bar"></span>`;
+      `<span class="cap">${s ? esc(s.n) : "あける"}</span>`;
     grid.appendChild(pad);
   });
   $("#colVal").textContent = state.cols;
@@ -225,7 +210,7 @@ grid.addEventListener("pointerdown", (e) => {
   const id = state.slots[i];
   if (!id) return;
   pad.classList.add("hit");
-  play(id, pad);
+  play(id);
 });
 grid.addEventListener("pointerup", (e) => e.target.closest(".pad")?.classList.remove("hit"));
 grid.addEventListener("pointerleave", (e) => e.target.closest(".pad")?.classList.remove("hit"), true);
@@ -274,7 +259,7 @@ listEl.addEventListener("click", (e) => {
   const b = e.target.closest(".item"); if (!b || selected < 0) return;
   state.slots[selected] = b.dataset.id;
   save(); renderGrid(); renderList();
-  play(b.dataset.id, grid.children[selected]);
+  play(b.dataset.id);
 });
 
 function openSheet(i) {

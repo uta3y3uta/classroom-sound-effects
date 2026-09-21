@@ -31,29 +31,48 @@ button:active,button.on{background:#4f46e5;color:#fff;}
 <body>
 
 <h1>聴き比べ</h1>
-<p class="lead">作り直す6音の候補です。それぞれ番号で「これ」と教えてください。<br>
-どれも違うときは，どこが違うかを書いていただければ探し直します。</p>
+<p class="lead">作り直す音の候補です。それぞれ記号で「これ」と教えてください。<br>
+どれも違うときは，どこが違うかを書いていただければ探し直します。<br>
+上の3つ（わらい声・ゴーン・ホイッスル）は，いま入れたものが「今」です。</p>
 
 <section>
-  <h2>１UP</h2>
-  <p class="now">いまは自作のチップチューン。A〜Dは本物の8bit音源素材（OtoLogic）です。</p>
-  <div class="row"><button data-s="try/oneup-a.mp3">A</button><span class="desc">ゲームボーイ風のアイテム取得ジングル</span></div>
-  <div class="row"><button data-s="try/oneup-b.mp3">B</button><span class="desc">ファミコン風のアイテム取得</span></div>
-  <div class="row"><button data-s="try/oneup-c.mp3">C</button><span class="desc">ファミコン風のスコア加算（長め）</span></div>
-  <div class="row"><button data-s="try/oneup-d.mp3">D</button><span class="desc">スーファミ風のアイテム取得</span></div>
-  <div class="row"><button data-s="try/oneup-e.mp3">E</button><span class="desc">自作チップチューン・速く明るく作り直したもの</span></div>
-  <div class="row"><button data-s="sfx/oneup.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+  <h2>わらい声</h2>
+  <p class="now">爆笑している女の人の声。ドリフの「足す笑い」に近いものを並べました。</p>
+  <div class="row"><button data-s="try/warai-a.mp3">A</button><span class="desc">ずっと笑い続けている（ひとり・大笑い）<span class="tag">現行</span></span></div>
+  <div class="row"><button data-s="try/warai-b.mp3">B</button><span class="desc">高い声でケタケタ笑う（ひとり）</span></div>
+  <div class="row"><button data-s="try/warai-c.mp3">C</button><span class="desc">女性の集団がドッと笑う（観客風）</span></div>
+  <div class="row"><button data-s="try/warai-d.mp3">D</button><span class="desc">ゆったり大きく笑う（ひとり・低め）</span></div>
+  <div class="row"><button data-s="try/warai-e.mp3">E</button><span class="desc">こらえきれずに笑い出す（ひとり・短い）</span></div>
+  <div class="row"><button data-s="try/warai-f.mp3">F</button><span class="desc">ひと笑いだけ（あははは・短い）</span></div>
 </section>
 
 <section>
-  <h2>土管</h2>
-  <p class="now">「すとん」と中へ入っていく音です。</p>
-  <div class="row"><button data-s="try/dokan-a.mp3">A</button><span class="desc">ファミコン風「入る」</span></div>
-  <div class="row"><button data-s="try/dokan-b.mp3">B</button><span class="desc">ゲームボーイ風「扉」</span></div>
-  <div class="row"><button data-s="try/dokan-c.mp3">C</button><span class="desc">スーファミ風「入る」</span></div>
-  <div class="row"><button data-s="try/dokan-d.mp3">D</button><span class="desc">ゲームボーイRPG風「入る」</span></div>
-  <div class="row"><button data-s="try/dokan-e.mp3">E</button><span class="desc">自作・ゆっくり深く落ちる下降音</span></div>
-  <div class="row"><button data-s="sfx/dokan.mp3">今</button><span class="desc">いま入っているもの<span class="tag">現行</span></span></div>
+  <h2>ゴーン（寺の鐘）</h2>
+  <p class="now">「ゴング（れんだ）」と入れ替えるものです。</p>
+  <div class="row"><button data-s="try/gone-a.mp3">A</button><span class="desc">梵鐘（ぼんしょう）。低く，うなりながら長く響く<span class="tag">現行</span></span></div>
+  <div class="row"><button data-s="try/gone-b.mp3">B</button><span class="desc">中くらいの鐘。カーンと明るめ</span></div>
+  <div class="row"><button data-s="try/gone-c.mp3">C</button><span class="desc">お寺のおまいり鐘。やわらかい</span></div>
+  <div class="row"><button data-s="try/gone-d.mp3">D</button><span class="desc">大徳寺の鐘。遠くで鳴っている感じ</span></div>
+</section>
+
+<section>
+  <h2>ホイッスル</h2>
+  <p class="now">「土管」を消したぶんに入れた音です。これ自体，別の音がよければそうします。</p>
+  <div class="row"><button data-s="try/whis-a.mp3">A</button><span class="desc">ピッ。審判の笛・単発で短い<span class="tag">現行</span></span></div>
+  <div class="row"><button data-s="try/whis-b.mp3">B</button><span class="desc">体育館で鳴らした笛。少し響く</span></div>
+  <div class="row"><button data-s="try/whis-c.mp3">C</button><span class="desc">金属の笛。ピリリッと長め</span></div>
+</section>
+
+<section>
+  <h2>１UP</h2>
+  <p class="now">優太さんの音声データをそのまま使いました。ここは決まりです。</p>
+  <div class="row"><button data-s="sfx/oneup.mp3">今</button><span class="desc">いただいたデータを切り出して音量をそろえたもの<span class="tag">現行</span></span></div>
+</section>
+
+<section>
+  <h2>イヨー</h2>
+  <p class="now">こちらも優太さんの録音です。</p>
+  <div class="row"><button data-s="sfx/iyoo.mp3">今</button><span class="desc">前後の無音を切って音量をそろえたもの<span class="tag">現行</span></span></div>
 </section>
 
 <section>

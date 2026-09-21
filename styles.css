@@ -140,15 +140,6 @@ svg{display:block;}
 .pad.hit .cap{color:var(--text);}
 .pad.hit .glyph{transform:scale(1.08);}
 
-/* 再生中の下線インジケーター */
-.pad .bar{
-  position:absolute;left:0;bottom:0;height:2px;width:100%;
-  background:var(--c,var(--text-dim));
-  transform:scaleX(0);transform-origin:left;
-  opacity:0;
-}
-.pad.playing .bar{opacity:.9;}
-
 /* 空きパッド */
 .pad.empty{
   border-style:dashed;border-color:#22222b;
