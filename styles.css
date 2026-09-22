@@ -24,6 +24,7 @@ body{
   height:100dvh;
   padding:env(safe-area-inset-top) 12px calc(env(safe-area-inset-bottom) + 8px);
   -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;
   -webkit-tap-highlight-color:transparent;
   touch-action:manipulation;
   overflow:hidden;
@@ -163,6 +164,29 @@ body[data-mode="edit"] .pad.selected{
 }
 body[data-mode="edit"] .pad .slotno{opacity:.55;}
 
+/* 長押しでつまんで入れかえる */
+body[data-mode="edit"] .pad{touch-action:none;}
+.pad.dragging{
+  opacity:.3;
+  border-style:dashed;border-color:var(--line);
+}
+.pad.dragging .glyph,.pad.dragging .cap{color:var(--text-faint);}
+.pad.drop-target{
+  border-color:var(--c,var(--text));
+  box-shadow:0 0 0 2px var(--c,var(--text)) inset;
+}
+.pad.drop-target::after{opacity:.2;}
+.pad.drag-ghost{
+  position:fixed;left:0;top:0;z-index:90;
+  pointer-events:none;transition:none;
+  border-color:var(--c,var(--text));
+  color:var(--text);
+  box-shadow:0 14px 30px rgba(0,0,0,.65),0 0 0 1px var(--c,var(--text)) inset;
+}
+.pad.drag-ghost::after{opacity:.3;}
+.pad.drag-ghost .cap{color:var(--text);}
+.pad.drag-ghost .slotno{display:none;}
+
 /* ===== フッター ===== */
 .bottom{
   flex:0 0 auto;
@@ -223,7 +247,8 @@ body[data-mode="edit"] .editbar{display:flex;}
   min-width:46px;text-align:center;font-size:12px;font-weight:700;
   font-variant-numeric:tabular-nums;
 }
-.hint{font-size:11px;color:var(--text-faint);}
+.hint{font-size:11px;color:var(--text-faint);white-space:nowrap;}
+.drag-hint::before{content:"／";margin-right:8px;opacity:.5;}
 
 /* ===== モーダル（音を選ぶ） ===== */
 .sheet-bg{
@@ -301,6 +326,7 @@ body[data-mode="edit"] .editbar{display:flex;}
 }
 .toast.show{opacity:1;transform:translate(-50%,0);}
 
-@media (max-width:420px){
+@media (max-width:480px){
   .seg button{padding:6px 10px;}
+  .drag-hint{display:none;}
 }

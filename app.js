@@ -202,19 +202,94 @@ function resize(dc, dr) {
   save(); renderGrid();
 }
 
+/* ---------- 長押しでパッドを入れかえる（つくる画面） ---------- */
+const LONG_MS = 380, MOVE_TOL = 10;
+let press = null;   // 長押し待ち { pad, i, x, y, timer }
+let drag = null;    // ドラッグ中 { pad, i, ghost, ox, oy, over }
+
+function cancelPress() {
+  if (!press) return;
+  clearTimeout(press.timer);
+  press = null;
+}
+
+function startDrag() {
+  if (!press || drag) return;
+  const { pad, i, x, y } = press;
+  press = null;
+  const r = pad.getBoundingClientRect();
+  const ghost = pad.cloneNode(true);
+  ghost.classList.add("drag-ghost");
+  ghost.style.width = r.width + "px";
+  ghost.style.height = r.height + "px";
+  document.body.appendChild(ghost);
+  drag = { pad, i, ghost, ox: x - r.left, oy: y - r.top, over: null };
+  moveDrag(x, y);
+  pad.classList.add("dragging");
+  navigator.vibrate?.(12);
+}
+
+function moveDrag(x, y) {
+  drag.ghost.style.transform = `translate3d(${x - drag.ox}px,${y - drag.oy}px,0) scale(1.06)`;
+  const el = document.elementFromPoint(x, y);
+  const p = el && el.closest ? el.closest(".pad") : null;
+  const over = p && p !== drag.pad && grid.contains(p) ? +p.dataset.i : null;
+  if (over === drag.over) return;
+  grid.querySelector(".pad.drop-target")?.classList.remove("drop-target");
+  drag.over = over;
+  if (over !== null) grid.children[over].classList.add("drop-target");
+}
+
+function endDrag(commit) {
+  const { ghost, i, over } = drag;
+  drag = null;
+  ghost.remove();
+  if (commit && over !== null && over !== i) {
+    const t = state.slots[i];
+    state.slots[i] = state.slots[over];
+    state.slots[over] = t;
+    save();
+  }
+  renderGrid();
+}
+
 grid.addEventListener("pointerdown", (e) => {
+  if (drag) return;   // ドラッグ中は2本目の指を無視する
   const pad = e.target.closest(".pad");
   if (!pad) return;
   const i = +pad.dataset.i;
-  if (document.body.dataset.mode === "edit") { openSheet(i); return; }
+  if (document.body.dataset.mode === "edit") {
+    cancelPress();
+    press = { pad, i, x: e.clientX, y: e.clientY, timer: 0 };
+    if (state.slots[i]) {
+      try { pad.setPointerCapture(e.pointerId); } catch (err) {}
+      press.timer = setTimeout(startDrag, LONG_MS);
+    }
+    return;
+  }
   const id = state.slots[i];
   if (!id) return;
   pad.classList.add("hit");
   play(id);
 });
-grid.addEventListener("pointerup", (e) => e.target.closest(".pad")?.classList.remove("hit"));
+
+grid.addEventListener("pointermove", (e) => {
+  if (drag) { moveDrag(e.clientX, e.clientY); return; }
+  if (press && Math.hypot(e.clientX - press.x, e.clientY - press.y) > MOVE_TOL) cancelPress();
+});
+
+grid.addEventListener("pointerup", (e) => {
+  e.target.closest(".pad")?.classList.remove("hit");
+  if (drag) { endDrag(true); return; }
+  if (press) { const i = press.i; cancelPress(); openSheet(i); }
+});
 grid.addEventListener("pointerleave", (e) => e.target.closest(".pad")?.classList.remove("hit"), true);
-grid.addEventListener("pointercancel", (e) => e.target.closest(".pad")?.classList.remove("hit"));
+grid.addEventListener("pointercancel", (e) => {
+  e.target.closest(".pad")?.classList.remove("hit");
+  cancelPress();
+  if (drag) endDrag(false);
+});
+grid.addEventListener("contextmenu", (e) => { if (document.body.dataset.mode === "edit") e.preventDefault(); });
 
 /* ---------- 音をえらぶシート ---------- */
 const sheetBg = $("#sheetBg"), listEl = $("#list"), catsEl = $("#cats"), qEl = $("#q");
@@ -279,11 +354,17 @@ $("#sheetClear").addEventListener("click", () => {
   if (selected < 0) return;
   state.slots[selected] = null; save(); renderGrid(); renderList();
 });
-document.addEventListener("keydown", (e) => { if (e.key === "Escape" && sheetBg.classList.contains("open")) closeSheet(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Escape") return;
+  if (drag) { cancelPress(); endDrag(false); return; }
+  if (sheetBg.classList.contains("open")) closeSheet();
+});
 
 /* ---------- ヘッダー・フッター ---------- */
 for (const b of document.querySelectorAll(".seg button")) {
   b.addEventListener("click", () => {
+    cancelPress();
+    if (drag) endDrag(false);
     document.body.dataset.mode = b.dataset.mode;
     document.querySelectorAll(".seg button").forEach((x) =>
       x.setAttribute("aria-selected", x === b));
