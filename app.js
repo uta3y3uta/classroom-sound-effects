@@ -20,8 +20,10 @@ for (const el of document.querySelectorAll("[data-icon]")) {
 }
 
 /* ---------- 状態 ---------- */
-const DEFAULT = ["drumroll","jajaan","seikai","fuseikai","fanfare","tettere","hakushu","kansei",
-                 "horn","kiraan","shakiin","chiin","coin","bikkuri","gaan","dedeen"];
+const DEFAULT = ["seikai2","yay","hakushu","horn",
+                 "buu","memai","uwaa","gakkari",
+                 "drumroll","tenshi","iyoo","kotsuzumi",
+                 "mokugyo","tettere","jajaan","kane"];
 let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false };
 
 function clampState(s) {
@@ -203,7 +205,7 @@ function resize(dc, dr) {
 }
 
 /* ---------- 長押しでパッドを入れかえる（つくる画面） ---------- */
-const LONG_MS = 380, MOVE_TOL = 10;
+const LONG_MS = 240, MOVE_TOL = 10;
 let press = null;   // 長押し待ち { pad, i, x, y, timer }
 let drag = null;    // ドラッグ中 { pad, i, ghost, ox, oy, over }
 
