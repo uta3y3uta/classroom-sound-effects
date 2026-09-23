@@ -1,7 +1,7 @@
 window.CATS = [{"id":"quiz","label":"クイズ","color":"#5ad8ff"},{"id":"hype","label":"もりあげ","color":"#ffc75c"},{"id":"accent","label":"アクセント","color":"#c08bff"},{"id":"react","label":"リアクション","color":"#ff7d9b"},{"id":"signal","label":"あいず","color":"#54e0a4"},{"id":"motion","label":"うごき","color":"#7d9dff"},{"id":"scene","label":"ばめん","color":"#ff96dd"},{"id":"game","label":"ゲーム","color":"#ff8a4c"},{"id":"wa","label":"和","color":"#e05c5c"},{"id":"fun","label":"ネタ","color":"#a6d96a"}];
 window.SOUNDS = [
 {"i":"seikai","n":"せいかい","c":"quiz","ic":"circle-check","g":0.646,"k":"ピンポーン ベル 鉄琴風 正解 クイズ"},
-{"i":"seikai2","n":"ピンポン","c":"quiz","ic":"bell-ring","g":0.759,"k":"ピンポン ピンポーン シンセベル 正解 ○ 合格 短い"},
+{"i":"seikai2","n":"ピンポン","c":"quiz","ic":"disc","g":0.759,"k":"ピンポン ピンポーン シンセベル 正解 ○ 合格 短い"},
 {"i":"fuseikai","n":"ざんねん","c":"quiz","ic":"circle-x","g":3.02,"k":"ブザー アナログ ブー 不正解 バツ 失敗"},
 {"i":"buu","n":"ブー","c":"quiz","ic":"x","g":3.802,"k":"ブー ブザー アナログ 不正解 バツ 失敗"},
 {"i":"jajaan","n":"ジャカジャン","c":"quiz","ic":"megaphone","g":1.567,"k":"ジャカジャン ジャジャーン オーケストラヒット デデデンッ 出題 問題です"},

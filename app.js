@@ -20,20 +20,29 @@ for (const el of document.querySelectorAll("[data-icon]")) {
 }
 
 /* ---------- 状態 ---------- */
-const DEFAULT = ["seikai2","yay","hakushu","horn",
-                 "buu","memai","uwaa","gakkari",
-                 "drumroll","tenshi","iyoo","kotsuzumi",
-                 "mokugyo","tettere","jajaan","kane"];
-let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false };
+const DEFAULT = ["jajaan","mokugyo","buu","seikai2",
+                 "tenshi","drumroll","memai","yay",
+                 "pafupafu","iyoo","uwaa","hakushu",
+                 "tettere","kotsuzumi","gakkari","horn"];
+let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false, colors: {} };
 
 function clampState(s) {
   s.cols = Math.min(MAX, Math.max(1, s.cols | 0 || 4));
   s.rows = Math.min(MAX, Math.max(1, s.rows | 0 || 4));
-  s.slots = Array.from({ length: s.cols * s.rows }, (_, i) => {
+  const count = s.cols * s.rows;
+  s.slots = Array.from({ length: count }, (_, i) => {
     const v = s.slots[i];
     return typeof v === "string" && byId.has(v) ? v : null;
   });
   s.vol = Math.min(100, Math.max(0, s.vol | 0));
+  const colors = {};
+  if (s.colors && typeof s.colors === "object") {
+    for (const k of Object.keys(s.colors)) {
+      const i = +k, v = s.colors[k];
+      if (i >= 0 && i < count && /^#[0-9a-fA-F]{6}$/.test(v)) colors[i] = v;
+    }
+  }
+  s.colors = colors;
   return s;
 }
 
@@ -165,7 +174,7 @@ function renderGrid() {
     const pad = document.createElement("button");
     pad.className = "pad" + (s ? "" : " empty") + (i === selected ? " selected" : "");
     pad.dataset.i = i;
-    if (s) pad.style.setProperty("--c", catColor.get(s.c));
+    if (s) pad.style.setProperty("--c", state.colors[i] || catColor.get(s.c));
     pad.innerHTML =
       `<span class="slotno">${i + 1}</span>` +
       `<span class="glyph">${svg(s ? s.ic : "plus")}</span>` +
@@ -179,6 +188,7 @@ function renderGrid() {
                            ["#rowMinus", state.rows, -1], ["#rowPlus", state.rows, 1]]) {
     $(b).disabled = d < 0 ? v <= 1 : v >= MAX;
   }
+  renderColorOptions();
   prefetch();
 }
 
@@ -192,17 +202,64 @@ function prefetch() {
 }
 
 function resize(dc, dr) {
-  const oc = state.cols, or = state.rows, old = state.slots;
+  const oc = state.cols, or = state.rows, old = state.slots, oldColors = state.colors;
   state.cols = Math.min(MAX, Math.max(1, oc + dc));
   state.rows = Math.min(MAX, Math.max(1, or + dr));
   const next = new Array(state.cols * state.rows).fill(null);
+  const nextColors = {};
   for (let r = 0; r < Math.min(or, state.rows); r++)
-    for (let c = 0; c < Math.min(oc, state.cols); c++)
-      next[r * state.cols + c] = old[r * oc + c];
+    for (let c = 0; c < Math.min(oc, state.cols); c++) {
+      const oi = r * oc + c, ni = r * state.cols + c;
+      next[ni] = old[oi];
+      if (oldColors[oi] !== undefined) nextColors[ni] = oldColors[oi];
+    }
   state.slots = next;
+  state.colors = nextColors;
   if (selected >= next.length) selected = -1;
   save(); renderGrid();
 }
+
+/* ---------- パッドの色を変える ---------- */
+const colorNoEl = $("#colorNo"), colorPickEl = $("#colorPick"), colorResetEl = $("#colorReset");
+let colorOptCount = -1, lastPicked = "#8b8b99";
+
+function defaultColorFor(i) {
+  const id = state.slots[i];
+  return id ? catColor.get(SOUNDS[byId.get(id)].c) : "#8b8b99";
+}
+
+function syncColorPick() {
+  const v = colorNoEl.value;
+  colorPickEl.value = v === "all" ? lastPicked : (state.colors[+v] || defaultColorFor(+v));
+}
+
+function renderColorOptions() {
+  const count = state.cols * state.rows;
+  if (colorOptCount !== count) {
+    const prev = colorNoEl.value;
+    colorNoEl.innerHTML = `<option value="all">ぜんぶ</option>` +
+      Array.from({ length: count }, (_, i) => `<option value="${i}">${i + 1}ばん</option>`).join("");
+    colorNoEl.value = prev === "all" || (+prev >= 0 && +prev < count) ? prev : "all";
+    colorOptCount = count;
+  }
+  syncColorPick();
+}
+colorNoEl.addEventListener("change", syncColorPick);
+colorPickEl.addEventListener("input", () => {
+  const hex = colorPickEl.value;
+  if (colorNoEl.value === "all") {
+    lastPicked = hex;
+    for (let i = 0; i < state.cols * state.rows; i++) state.colors[i] = hex;
+  } else {
+    state.colors[+colorNoEl.value] = hex;
+  }
+  save(); renderGrid();
+});
+colorResetEl.addEventListener("click", () => {
+  if (colorNoEl.value === "all") state.colors = {};
+  else delete state.colors[+colorNoEl.value];
+  save(); renderGrid();
+});
 
 /* ---------- 長押しでパッドを入れかえる（つくる画面） ---------- */
 const LONG_MS = 240, MOVE_TOL = 10;
