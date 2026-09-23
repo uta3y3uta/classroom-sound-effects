@@ -517,7 +517,13 @@ paletteEl.addEventListener("pointerdown", (e) => {
 });
 paletteEl.addEventListener("pointermove", (e) => {
   if (cdrag) { moveCDrag(e.clientX, e.clientY); return; }
-  if (cpress && Math.hypot(e.clientX - cpress.x, e.clientY - cpress.y) > MOVE_TOL) cancelCPress();
+  if (!cpress || Math.hypot(e.clientX - cpress.x, e.clientY - cpress.y) <= MOVE_TOL) return;
+  // 時間を待たず，動かしはじめた時点でつまめるようにする。
+  // マウスだと押したとたんに動きだすので，長押しの時間だけで見ると取りこぼす。
+  clearTimeout(cpress.timer);
+  cpress.x = e.clientX; cpress.y = e.clientY;
+  startCDrag();
+  if (cdrag) moveCDrag(e.clientX, e.clientY);
 });
 paletteEl.addEventListener("pointerup", () => {
   if (cdrag) { endCDrag(true); return; }
@@ -656,11 +662,35 @@ $("#share").addEventListener("click", async () => {
   toast(copied ? "共有URLをコピーしました" : "このページのURLが共有URLです");
 });
 
+/* ---------- 新しい版が出ていないか見に行く ---------- */
+// index.html には10分のキャッシュが効いてしまう（GitHub Pagesの既定）。
+// 版番号は index.html が持っているので，更新した直後に開くと
+// 古いHTMLがそのまま使われ，新しいCSS/JSに入れかわらない。
+// そこで版番号だけを別ファイルにして，キャッシュを通さずに確かめる。
+// 数字が上がっていたらURLに ?v= を足して読み直す（別のURL扱いになり，確実に取り直される）。
+function checkVersion() {
+  fetch("version.json?t=" + Date.now(), { cache: "no-store" })
+    .then((r) => r.json())
+    .then((v) => {
+      const ver = +v.ver;
+      if (!(ver > window.ASSET_VER)) return;
+      if (sessionStorage.getItem("ver-reload") === String(ver)) return;  // 読み直しは1回だけ
+      sessionStorage.setItem("ver-reload", String(ver));
+      location.replace(location.pathname + "?v=" + ver + location.hash);
+    })
+    .catch(() => {});
+}
+
 /* ---------- 起動 ---------- */
+// 読み直しに使った ?v= は，共有URLに混ざらないよう消しておく
+if (/[?&]v=\d+/.test(location.search)) {
+  history.replaceState(null, "", location.pathname + location.hash);
+}
 load();
 recordHistory();   // 起動時の状態を，もとにもどす先として控えておく
 syncVol();
 renderGrid();
+checkVersion();
 document.addEventListener("pointerdown", function once() {
   if (ctx.state === "suspended") ctx.resume();
   document.removeEventListener("pointerdown", once);
