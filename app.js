@@ -220,46 +220,88 @@ function resize(dc, dr) {
 }
 
 /* ---------- パッドの色を変える ---------- */
-const colorNoEl = $("#colorNo"), colorPickEl = $("#colorPick"), colorResetEl = $("#colorReset");
-let colorOptCount = -1, lastPicked = "#8b8b99";
+// 32色のネオンパレット。HSL の S=100% / L=61%（最大チャンネル255・最小56）という
+// 「ネオンの面」を一周し，OKLab 空間での色の差が等間隔になる位置で32色を取ったもの。
+// 色相の角度で等分すると橙ばかり6色も並ぶので，見た目の差で等分してある。
+const NEON = ["#ff3838","#ff6138","#ff7f38","#ff9b38","#ffb438","#ffcd38","#ffe638","#fffe38",
+              "#d0ff38","#97ff38","#38ff39","#38ff84","#38ffb7","#38ffe4","#38f7ff","#38e1ff",
+              "#38cbff","#38b5ff","#389eff","#3887ff","#386eff","#3851ff","#4838ff","#6e38ff",
+              "#8f38ff","#af38ff","#cf38ff","#ef38ff","#ff38ea","#ff38c1","#ff3898","#ff386d"];
+
+const colorNoEl = $("#colorNo"), colorPickEl = $("#colorPick"),
+      colorResetEl = $("#colorReset"), paletteEl = $("#palette");
+let colorOptCount = -1, lastPicked = NEON[0];
 
 function defaultColorFor(i) {
   const id = state.slots[i];
   return id ? catColor.get(SOUNDS[byId.get(id)].c) : "#8b8b99";
 }
 
-function syncColorPick() {
+function currentColor() {
   const v = colorNoEl.value;
-  colorPickEl.value = v === "all" ? lastPicked : (state.colors[+v] || defaultColorFor(+v));
+  return v === "all" ? lastPicked : (state.colors[+v] || defaultColorFor(+v));
+}
+
+function syncColorPick() {
+  const cur = currentColor().toLowerCase();
+  colorPickEl.style.setProperty("--c", cur);
+  for (const b of paletteEl.children) b.classList.toggle("on", b.dataset.c === cur);
 }
 
 function renderColorOptions() {
   const count = state.cols * state.rows;
   if (colorOptCount !== count) {
     const prev = colorNoEl.value;
-    colorNoEl.innerHTML = `<option value="all">ぜんぶ</option>` +
-      Array.from({ length: count }, (_, i) => `<option value="${i}">${i + 1}ばん</option>`).join("");
+    colorNoEl.innerHTML = `<option value="all">全部</option>` +
+      Array.from({ length: count }, (_, i) => `<option value="${i}">${i + 1}</option>`).join("");
     colorNoEl.value = prev === "all" || (+prev >= 0 && +prev < count) ? prev : "all";
     colorOptCount = count;
   }
   syncColorPick();
 }
+
+paletteEl.innerHTML = NEON.map((c) =>
+  `<button type="button" role="option" data-c="${c}" style="--c:${c}" aria-label="${c}"></button>`).join("");
+
+function openPalette(open) {
+  paletteEl.classList.toggle("open", open);
+  colorPickEl.setAttribute("aria-expanded", open ? "true" : "false");
+  if (!open) return;
+  // 画面からはみ出さない位置に寄せる
+  paletteEl.style.left = "0px";
+  const box = paletteEl.getBoundingClientRect();
+  const over = box.right - (innerWidth - 8);
+  if (over > 0) paletteEl.style.left = -over + "px";
+}
+
+colorPickEl.addEventListener("click", () => openPalette(!paletteEl.classList.contains("open")));
 colorNoEl.addEventListener("change", syncColorPick);
-colorPickEl.addEventListener("input", () => {
-  const hex = colorPickEl.value;
+
+paletteEl.addEventListener("click", (e) => {
+  const hex = e.target.dataset && e.target.dataset.c;
+  if (!hex) return;
   if (colorNoEl.value === "all") {
     lastPicked = hex;
     for (let i = 0; i < state.cols * state.rows; i++) state.colors[i] = hex;
   } else {
     state.colors[+colorNoEl.value] = hex;
   }
+  openPalette(false);
   save(); renderGrid();
 });
+
 colorResetEl.addEventListener("click", () => {
   if (colorNoEl.value === "all") state.colors = {};
   else delete state.colors[+colorNoEl.value];
+  openPalette(false);
   save(); renderGrid();
 });
+
+document.addEventListener("pointerdown", (e) => {
+  if (!paletteEl.classList.contains("open")) return;
+  const t = e.target;
+  if (!t || !t.closest || !t.closest(".color-ctl")) openPalette(false);
+}, true);
 
 /* ---------- 長押しでパッドを入れかえる（つくる画面） ---------- */
 const LONG_MS = 240, MOVE_TOL = 10;
@@ -416,6 +458,7 @@ $("#sheetClear").addEventListener("click", () => {
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (drag) { cancelPress(); endDrag(false); return; }
+  if (paletteEl.classList.contains("open")) { openPalette(false); return; }
   if (sheetBg.classList.contains("open")) closeSheet();
 });
 
@@ -424,6 +467,7 @@ for (const b of document.querySelectorAll(".seg button")) {
   b.addEventListener("click", () => {
     cancelPress();
     if (drag) endDrag(false);
+    openPalette(false);
     document.body.dataset.mode = b.dataset.mode;
     document.querySelectorAll(".seg button").forEach((x) =>
       x.setAttribute("aria-selected", x === b));

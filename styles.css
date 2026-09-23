@@ -251,21 +251,40 @@ body[data-mode="edit"] .editbar{display:flex;}
 .drag-hint::before{content:"／";margin-right:8px;opacity:.5;}
 
 /* 色をかえるコントロール */
-.color-ctl{display:flex;align-items:center;gap:6px;}
+.color-ctl{display:flex;align-items:center;gap:6px;position:relative;}
 .color-ctl::before{content:"／";margin-right:2px;opacity:.5;color:var(--text-faint);font-size:11px;}
 .color-ctl select{
   height:30px;padding:0 6px;
   background:var(--bg);border:1px solid var(--line-soft);border-radius:8px;
   color:var(--text);font:inherit;font-size:12px;
 }
-.color-ctl input[type=color]{
-  width:30px;height:30px;padding:0;
-  border:1px solid var(--line-soft);border-radius:8px;
-  background:var(--bg);cursor:pointer;
+/* いま選んでいる色。押すとパレットが開く */
+.swatch{
+  width:30px;height:30px;padding:3px;flex:0 0 auto;
+  border:1px solid var(--line-soft);border-radius:8px;background:var(--bg);
 }
-.color-ctl input[type=color]::-webkit-color-swatch-wrapper{padding:3px;}
-.color-ctl input[type=color]::-webkit-color-swatch{border:none;border-radius:5px;}
-.color-ctl input[type=color]::-moz-color-swatch{border:none;border-radius:5px;}
+.swatch::after{
+  content:"";display:block;width:100%;height:100%;border-radius:5px;
+  background:var(--c,var(--text-dim));
+}
+.swatch[aria-expanded="true"]{border-color:var(--line);background:var(--surface-2);}
+
+/* 32色のネオンパレット */
+.palette{
+  position:absolute;top:calc(100% + 9px);left:0;z-index:60;
+  display:none;grid-template-columns:repeat(8,26px);gap:6px;
+  padding:10px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 16px 34px rgba(0,0,0,.6);
+}
+.palette.open{display:grid;}
+.palette button{
+  width:26px;height:26px;border-radius:7px;background:var(--c);
+  box-shadow:0 0 0 1px rgba(255,255,255,.12) inset;
+  transition:transform .12s;
+}
+.palette button:hover{transform:scale(1.15);}
+.palette button.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c);}
 
 /* ===== モーダル（音を選ぶ） ===== */
 .sheet-bg{
