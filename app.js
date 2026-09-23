@@ -47,8 +47,66 @@ function clampState(s) {
 }
 
 function save() {
+  recordHistory();
   try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
 }
+
+/* ---------- もとにもどす／やりなおす ---------- */
+// 並べ方・ボタンの数・色を，変わるたびにまるごと控えておく。
+// 音量とミュートは「並べ方」ではないので，控えの対象に入れない。
+// save() から自動で呼ぶので，これから編集の処理を足しても取りこぼさない。
+const HIST_MAX = 60;
+const undoStack = [], redoStack = [];
+let histNow = null, histLock = false;
+
+function histSnapshot() {
+  return JSON.stringify([state.cols, state.rows, state.slots, state.colors]);
+}
+
+function recordHistory() {
+  if (histLock) return;
+  const s = histSnapshot();
+  if (histNow === null) { histNow = s; return; }   // 起動直後の1回目
+  if (s === histNow) return;                       // 中身が変わっていない
+  undoStack.push(histNow);
+  if (undoStack.length > HIST_MAX) undoStack.shift();
+  redoStack.length = 0;
+  histNow = s;
+}
+
+function applyHistory(s) {
+  const [cols, rows, slots, colors] = JSON.parse(s);
+  state.cols = cols; state.rows = rows; state.slots = slots; state.colors = colors;
+  histNow = s;
+  if (selected >= slots.length) selected = -1;
+  colorOptCount = -1;                              // 番号の選択肢を作り直す
+  histLock = true; save(); histLock = false;       // 控えずに保存だけする
+  renderGrid();
+  if (sheetBg.classList.contains("open")) renderList();
+}
+
+function undo() {
+  if (!undoStack.length) return false;
+  redoStack.push(histNow); applyHistory(undoStack.pop()); return true;
+}
+function redo() {
+  if (!redoStack.length) return false;
+  undoStack.push(histNow); applyHistory(redoStack.pop()); return true;
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+  const t = e.target;
+  // 検索らんに入力中は，文字のほうの取り消しを邪魔しない
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+  const k = e.key.toLowerCase();
+  let msg = null;
+  if (k === "z" && !e.shiftKey) msg = undo() ? "もとにもどしました" : "もとにもどせません";
+  else if (k === "y" || (k === "z" && e.shiftKey)) msg = redo() ? "やりなおしました" : "これより先はありません";
+  if (msg === null) return;
+  e.preventDefault();
+  toast(msg);
+});
 
 function load() {
   const fromHash = decodeHash(location.hash.slice(1));
@@ -230,7 +288,7 @@ const NEON = ["#ff3838","#ff6138","#ff7f38","#ff9b38","#ffb438","#ffcd38","#ffe6
 
 const colorNoEl = $("#colorNo"), colorPickEl = $("#colorPick"),
       colorResetEl = $("#colorReset"), paletteEl = $("#palette");
-let colorOptCount = -1, lastPicked = NEON[0];
+let colorOptCount = -1, lastPicked = NEON[0], paletteSkipClick = false;
 
 function defaultColorFor(i) {
   const id = state.slots[i];
@@ -278,6 +336,7 @@ colorPickEl.addEventListener("click", () => openPalette(!paletteEl.classList.con
 colorNoEl.addEventListener("change", syncColorPick);
 
 paletteEl.addEventListener("click", (e) => {
+  if (paletteSkipClick) { paletteSkipClick = false; return; }
   const hex = e.target.dataset && e.target.dataset.c;
   if (!hex) return;
   if (colorNoEl.value === "all") {
@@ -392,6 +451,83 @@ grid.addEventListener("pointercancel", (e) => {
 });
 grid.addEventListener("contextmenu", (e) => { if (document.body.dataset.mode === "edit") e.preventDefault(); });
 
+/* ---------- パレットの色を長押しでつまみ，パッドまで運ぶ ---------- */
+let cpress = null;   // 長押し待ち { hex, x, y, timer }
+let cdrag = null;    // 運んでいる最中 { hex, ghost, over }
+
+function cancelCPress() {
+  if (!cpress) return;
+  clearTimeout(cpress.timer);
+  cpress = null;
+}
+
+function startCDrag() {
+  if (!cpress || cdrag) return;
+  const { hex, x, y } = cpress;
+  cpress = null;
+  paletteSkipClick = true;            // はなしたときに色が二重に付かないように
+  const ghost = document.createElement("span");
+  ghost.className = "color-ghost";
+  ghost.style.setProperty("--c", hex);
+  document.body.appendChild(ghost);
+  cdrag = { hex, ghost, over: null };
+  paletteEl.classList.add("carrying");  // 下のパッドが見えるよう薄くする
+  moveCDrag(x, y);
+  navigator.vibrate?.(12);
+}
+
+// パッドの色をもとにもどす（運んでいる最中の下見を消す）
+function unpreview(i) {
+  grid.children[i].classList.remove("drop-target");
+  grid.children[i].style.setProperty("--c", state.colors[i] || defaultColorFor(i));
+}
+
+function moveCDrag(x, y) {
+  cdrag.ghost.style.transform = `translate3d(${x}px,${y}px,0)`;
+  // パレット自身が指の下にあると当たり判定をさえぎるので，測る一瞬だけ透かす
+  paletteEl.style.pointerEvents = "none";
+  const el = document.elementFromPoint(x, y);
+  paletteEl.style.pointerEvents = "";
+  const p = el && el.closest ? el.closest(".pad") : null;
+  const over = p && grid.contains(p) && !p.classList.contains("empty") ? +p.dataset.i : null;
+  if (over === cdrag.over) return;
+  if (cdrag.over !== null) unpreview(cdrag.over);
+  cdrag.over = over;
+  if (over !== null) {
+    grid.children[over].classList.add("drop-target");
+    grid.children[over].style.setProperty("--c", cdrag.hex);   // 置く前に色を下見できる
+  }
+}
+
+function endCDrag(commit) {
+  const { hex, ghost, over } = cdrag;
+  cdrag = null;
+  ghost.remove();
+  paletteEl.classList.remove("carrying");
+  if (commit && over !== null) { state.colors[over] = hex; save(); }
+  renderGrid();
+}
+
+paletteEl.addEventListener("pointerdown", (e) => {
+  const b = e.target.closest ? e.target.closest("button[data-c]") : null;
+  paletteSkipClick = false;
+  if (!b || cdrag) return;
+  try { b.setPointerCapture(e.pointerId); } catch (err) {}
+  cpress = { hex: b.dataset.c, x: e.clientX, y: e.clientY, timer: setTimeout(startCDrag, LONG_MS) };
+});
+paletteEl.addEventListener("pointermove", (e) => {
+  if (cdrag) { moveCDrag(e.clientX, e.clientY); return; }
+  if (cpress && Math.hypot(e.clientX - cpress.x, e.clientY - cpress.y) > MOVE_TOL) cancelCPress();
+});
+paletteEl.addEventListener("pointerup", () => {
+  if (cdrag) { endCDrag(true); return; }
+  cancelCPress();
+});
+paletteEl.addEventListener("pointercancel", () => {
+  cancelCPress();
+  if (cdrag) endCDrag(false);
+});
+
 /* ---------- 音をえらぶシート ---------- */
 const sheetBg = $("#sheetBg"), listEl = $("#list"), catsEl = $("#cats"), qEl = $("#q");
 let filterCat = "", query = "";
@@ -458,6 +594,7 @@ $("#sheetClear").addEventListener("click", () => {
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   if (drag) { cancelPress(); endDrag(false); return; }
+  if (cdrag) { cancelCPress(); endCDrag(false); return; }
   if (paletteEl.classList.contains("open")) { openPalette(false); return; }
   if (sheetBg.classList.contains("open")) closeSheet();
 });
@@ -467,6 +604,8 @@ for (const b of document.querySelectorAll(".seg button")) {
   b.addEventListener("click", () => {
     cancelPress();
     if (drag) endDrag(false);
+    cancelCPress();
+    if (cdrag) endCDrag(false);
     openPalette(false);
     document.body.dataset.mode = b.dataset.mode;
     document.querySelectorAll(".seg button").forEach((x) =>
@@ -519,6 +658,7 @@ $("#share").addEventListener("click", async () => {
 
 /* ---------- 起動 ---------- */
 load();
+recordHistory();   // 起動時の状態を，もとにもどす先として控えておく
 syncVol();
 renderGrid();
 document.addEventListener("pointerdown", function once() {

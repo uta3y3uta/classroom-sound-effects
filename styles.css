@@ -281,10 +281,20 @@ body[data-mode="edit"] .editbar{display:flex;}
 .palette button{
   width:26px;height:26px;border-radius:7px;background:var(--c);
   box-shadow:0 0 0 1px rgba(255,255,255,.12) inset;
-  transition:transform .12s;
+  transition:transform .12s;touch-action:none;
 }
 .palette button:hover{transform:scale(1.15);}
 .palette button.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c);}
+
+/* 色をつまんでパッドまで運んでいる最中 */
+.palette.carrying{opacity:.2;}
+.color-ghost{
+  position:fixed;left:0;top:0;z-index:95;
+  width:34px;height:34px;margin:-17px 0 0 -17px;
+  border-radius:10px;background:var(--c);
+  pointer-events:none;
+  box-shadow:0 12px 26px rgba(0,0,0,.6),0 0 0 2px rgba(255,255,255,.25) inset;
+}
 
 /* ===== モーダル（音を選ぶ） ===== */
 .sheet-bg{
