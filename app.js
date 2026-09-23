@@ -341,9 +341,11 @@ function defaultColorFor(i) {
   return id ? catColor.get(SOUNDS[byId.get(id)].c) : "#8b8b99";
 }
 
+// 「ー」は，どこにも色をつけない状態。色をえらんでも画面は変わらず，
+// つまんで運ぶための色を手に持つだけになる。はじめはこれを選んでおく
 function currentColor() {
   const v = colorNoEl.value;
-  return v === "all" ? lastPicked : (state.colors[+v] || defaultColorFor(+v));
+  return v === "all" || v === "none" ? lastPicked : (state.colors[+v] || defaultColorFor(+v));
 }
 
 function syncColorPick() {
@@ -356,11 +358,12 @@ function renderColorOptions() {
   const count = state.cols * state.rows;
   if (colorOptCount !== count) {
     const prev = colorNoEl.value;
-    colorNoEl.innerHTML = `<option value="all">全部</option>` +
+    colorNoEl.innerHTML = `<option value="none">ー</option><option value="all">全部</option>` +
       Array.from({ length: count }, (_, i) => `<option value="${i}">${i + 1}</option>`).join("");
     // はじめて作るときは prev が空。そのまま入れると，らんが空っぽに見えてしまう
-    const keep = prev === "all" || (prev !== "" && +prev >= 0 && +prev < count);
-    colorNoEl.value = keep ? prev : "all";
+    const keep = prev === "none" || prev === "all" ||
+                 (prev !== "" && +prev >= 0 && +prev < count);
+    colorNoEl.value = keep ? prev : "none";
     colorOptCount = count;
   }
   syncColorPick();
@@ -390,20 +393,28 @@ paletteEl.addEventListener("click", (e) => {
   if (paletteSkipClick) { paletteSkipClick = false; return; }
   const hex = e.target.dataset && e.target.dataset.c;
   if (!hex) return;
-  if (colorNoEl.value === "all") {
+  const v = colorNoEl.value;
+  openPalette(false);
+  if (v === "none") {                 // 手に持つだけ。画面は変えない
+    lastPicked = hex;
+    syncColorPick();
+    return;
+  }
+  if (v === "all") {
     lastPicked = hex;
     for (let i = 0; i < state.cols * state.rows; i++) state.colors[i] = hex;
   } else {
-    state.colors[+colorNoEl.value] = hex;
+    state.colors[+v] = hex;
   }
-  openPalette(false);
   save(); renderGrid();
 });
 
 colorResetEl.addEventListener("click", () => {
-  if (colorNoEl.value === "all") state.colors = {};
-  else delete state.colors[+colorNoEl.value];
+  const v = colorNoEl.value;
   openPalette(false);
+  if (v === "none") return;           // どこにもかからないので，もどす先もない
+  if (v === "all") state.colors = {};
+  else delete state.colors[+v];
   save(); renderGrid();
 });
 
