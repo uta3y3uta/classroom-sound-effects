@@ -250,6 +250,19 @@ body[data-mode="edit"] .editbar{display:flex;}
 .hint{font-size:11px;color:var(--text-faint);white-space:nowrap;}
 .drag-hint::before{content:"／";margin-right:8px;opacity:.5;}
 
+/* もとにもどす／やりなおす。ゴミ箱のとなりに，主張しない見た目で置く */
+.icon-btn.quiet{
+  width:32px;height:32px;
+  border-color:transparent;background:transparent;color:var(--text-faint);
+}
+.icon-btn.quiet svg{width:16px;height:16px;}
+.icon-btn.quiet:hover:not(:disabled){
+  color:var(--text);background:var(--surface-2);border-color:var(--line-soft);
+}
+.icon-btn.quiet:disabled{opacity:.28;cursor:default;}
+#undoBtn{margin-right:-6px;}
+#redoBtn{margin-right:2px;}
+
 /* 色をかえるコントロール */
 .color-ctl{display:flex;align-items:center;gap:6px;position:relative;}
 .color-ctl::before{content:"／";margin-right:2px;opacity:.5;color:var(--text-faint);font-size:11px;}
@@ -258,9 +271,9 @@ body[data-mode="edit"] .editbar{display:flex;}
   background:var(--bg);border:1px solid var(--line-soft);border-radius:8px;
   color:var(--text);font:inherit;font-size:12px;
 }
-/* いま選んでいる色。押すとパレットが開く */
+/* いま選んでいる色。押すとパレットが開き，つまんで動かすとパッドまで運べる */
 .swatch{
-  width:30px;height:30px;padding:3px;flex:0 0 auto;
+  width:30px;height:30px;padding:3px;flex:0 0 auto;touch-action:none;
   border:1px solid var(--line-soft);border-radius:8px;background:var(--bg);
 }
 .swatch::after{

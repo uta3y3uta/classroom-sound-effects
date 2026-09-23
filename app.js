@@ -63,15 +63,23 @@ function histSnapshot() {
   return JSON.stringify([state.cols, state.rows, state.slots, state.colors]);
 }
 
+// もどせないときはボタンを薄くして，押しても何も起きないことを見せておく
+const undoBtn = $("#undoBtn"), redoBtn = $("#redoBtn");
+function syncHistBtns() {
+  undoBtn.disabled = !undoStack.length;
+  redoBtn.disabled = !redoStack.length;
+}
+
 function recordHistory() {
   if (histLock) return;
   const s = histSnapshot();
-  if (histNow === null) { histNow = s; return; }   // 起動直後の1回目
+  if (histNow === null) { histNow = s; syncHistBtns(); return; }   // 起動直後の1回目
   if (s === histNow) return;                       // 中身が変わっていない
   undoStack.push(histNow);
   if (undoStack.length > HIST_MAX) undoStack.shift();
   redoStack.length = 0;
   histNow = s;
+  syncHistBtns();
 }
 
 function applyHistory(s) {
@@ -87,12 +95,16 @@ function applyHistory(s) {
 
 function undo() {
   if (!undoStack.length) return false;
-  redoStack.push(histNow); applyHistory(undoStack.pop()); return true;
+  redoStack.push(histNow); applyHistory(undoStack.pop()); syncHistBtns(); return true;
 }
 function redo() {
   if (!redoStack.length) return false;
-  undoStack.push(histNow); applyHistory(redoStack.pop()); return true;
+  undoStack.push(histNow); applyHistory(redoStack.pop()); syncHistBtns(); return true;
 }
+
+// Ctrlキーのないタブレットでも使えるよう，画面にもボタンを置く
+undoBtn.addEventListener("click", () => toast(undo() ? "もとにもどしました" : "もとにもどせません"));
+redoBtn.addEventListener("click", () => toast(redo() ? "やりなおしました" : "これより先はありません"));
 
 document.addEventListener("keydown", (e) => {
   if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
@@ -121,9 +133,30 @@ function load() {
 /* ---------- 共有URL ---------- */
 const B64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
+// 色のぶんを何バイト足すか決める。
+// ぜんぶ既定の色なら1バイトも足さない（前と同じ長さのURLになる）。
+// 「全部」で染めたときはたった2バイト。1つずつ変えたときだけ1マス1バイト使う。
+// 0＝既定の色，1〜32＝ネオンパレットの何番目か。
+function colorBytes() {
+  const n = state.cols * state.rows;
+  const idx = [];
+  let any = false, uniform = true;
+  for (let i = 0; i < n; i++) {
+    const hex = state.colors[i];
+    const v = hex ? NEON.indexOf(hex.toLowerCase()) + 1 : 0;
+    idx.push(v);
+    if (v) any = true;
+    if (v !== idx[0]) uniform = false;
+  }
+  if (!any) return [];
+  return uniform ? [0, idx[0]] : [1, ...idx];
+}
+
 function encodeState() {
   const bytes = [7, state.cols, state.rows];
   for (const id of state.slots) bytes.push(id ? byId.get(id) + 1 : 0);
+  // 色はうしろに足すだけ。古い版のアプリは読み飛ばすので，音の並びは正しく開ける
+  bytes.push(...colorBytes());
   let out = "";
   for (let i = 0; i < bytes.length; i += 3) {
     const n = (bytes[i] << 16) | ((bytes[i + 1] || 0) << 8) | (bytes[i + 2] || 0);
@@ -149,12 +182,24 @@ function decodeHash(str) {
   if (bytes[0] !== 7) return null;
   const cols = bytes[1], rows = bytes[2];
   if (cols < 1 || cols > MAX || rows < 1 || rows > MAX) return null;
+  const n = cols * rows;
   const slots = [];
-  for (let i = 0; i < cols * rows; i++) {
+  for (let i = 0; i < n; i++) {
     const v = bytes[3 + i];
     slots.push(v ? (SOUNDS[v - 1] || {}).i || null : null);
   }
-  return { cols, rows, slots, vol: 80, muted: false };
+  // うしろに色がついていれば取り出す。ついていなければ既定の色のまま
+  const cb = bytes.slice(3 + n), colors = {};
+  if (cb[0] === 0) {
+    const hex = NEON[cb[1] - 1];
+    if (hex) for (let i = 0; i < n; i++) colors[i] = hex;
+  } else if (cb[0] === 1) {
+    for (let i = 0; i < n; i++) {
+      const hex = NEON[cb[1 + i] - 1];
+      if (hex) colors[i] = hex;
+    }
+  }
+  return { cols, rows, slots, colors, vol: 80, muted: false };
 }
 
 /* ---------- 音 ---------- */
@@ -288,7 +333,8 @@ const NEON = ["#ff3838","#ff6138","#ff7f38","#ff9b38","#ffb438","#ffcd38","#ffe6
 
 const colorNoEl = $("#colorNo"), colorPickEl = $("#colorPick"),
       colorResetEl = $("#colorReset"), paletteEl = $("#palette");
-let colorOptCount = -1, lastPicked = NEON[0], paletteSkipClick = false;
+let colorOptCount = -1, lastPicked = NEON[0];
+let paletteSkipClick = false, swatchSkipClick = false;
 
 function defaultColorFor(i) {
   const id = state.slots[i];
@@ -312,7 +358,9 @@ function renderColorOptions() {
     const prev = colorNoEl.value;
     colorNoEl.innerHTML = `<option value="all">全部</option>` +
       Array.from({ length: count }, (_, i) => `<option value="${i}">${i + 1}</option>`).join("");
-    colorNoEl.value = prev === "all" || (+prev >= 0 && +prev < count) ? prev : "all";
+    // はじめて作るときは prev が空。そのまま入れると，らんが空っぽに見えてしまう
+    const keep = prev === "all" || (prev !== "" && +prev >= 0 && +prev < count);
+    colorNoEl.value = keep ? prev : "all";
     colorOptCount = count;
   }
   syncColorPick();
@@ -332,7 +380,10 @@ function openPalette(open) {
   if (over > 0) paletteEl.style.left = -over + "px";
 }
 
-colorPickEl.addEventListener("click", () => openPalette(!paletteEl.classList.contains("open")));
+colorPickEl.addEventListener("click", () => {
+  if (swatchSkipClick) { swatchSkipClick = false; return; }   // 色を運んだ直後は開かない
+  openPalette(!paletteEl.classList.contains("open"));
+});
 colorNoEl.addEventListener("change", syncColorPick);
 
 paletteEl.addEventListener("click", (e) => {
@@ -463,9 +514,11 @@ function cancelCPress() {
 
 function startCDrag() {
   if (!cpress || cdrag) return;
-  const { hex, x, y } = cpress;
+  const { hex, x, y, from } = cpress;
   cpress = null;
-  paletteSkipClick = true;            // はなしたときに色が二重に付かないように
+  // はなしたときに，色が二重に付いたりパレットが開いたりしないように
+  if (from === "swatch") swatchSkipClick = true;
+  else paletteSkipClick = true;
   const ghost = document.createElement("span");
   ghost.className = "color-ghost";
   ghost.style.setProperty("--c", hex);
@@ -484,10 +537,12 @@ function unpreview(i) {
 
 function moveCDrag(x, y) {
   cdrag.ghost.style.transform = `translate3d(${x}px,${y}px,0)`;
-  // パレット自身が指の下にあると当たり判定をさえぎるので，測る一瞬だけ透かす
+  // パレットや四角が指の下にあると当たり判定をさえぎるので，測る一瞬だけ透かす
   paletteEl.style.pointerEvents = "none";
+  colorPickEl.style.pointerEvents = "none";
   const el = document.elementFromPoint(x, y);
   paletteEl.style.pointerEvents = "";
+  colorPickEl.style.pointerEvents = "";
   const p = el && el.closest ? el.closest(".pad") : null;
   const over = p && grid.contains(p) && !p.classList.contains("empty") ? +p.dataset.i : null;
   if (over === cdrag.over) return;
@@ -508,31 +563,47 @@ function endCDrag(commit) {
   renderGrid();
 }
 
-paletteEl.addEventListener("pointerdown", (e) => {
+// つまむ操作は2か所から始められるので，中身は共通にしておく。
+// pick は「どの色をつまむか」を返す。useTimer は長押しの時間だけでもつまめるかどうか。
+function colorDragFrom(el, pick, from, useTimer) {
+  el.addEventListener("pointerdown", (e) => {
+    paletteSkipClick = false; swatchSkipClick = false;
+    const src = cdrag ? null : pick(e);
+    if (!src) return;
+    try { src.el.setPointerCapture(e.pointerId); } catch (err) {}
+    cpress = { hex: src.hex, x: e.clientX, y: e.clientY, from,
+               timer: useTimer ? setTimeout(startCDrag, LONG_MS) : 0 };
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (cdrag) { moveCDrag(e.clientX, e.clientY); return; }
+    if (!cpress || cpress.from !== from) return;
+    if (Math.hypot(e.clientX - cpress.x, e.clientY - cpress.y) <= MOVE_TOL) return;
+    // 時間を待たず，動かしはじめた時点でつまめるようにする。
+    // マウスだと押したとたんに動きだすので，長押しの時間だけで見ると取りこぼす。
+    clearTimeout(cpress.timer);
+    cpress.x = e.clientX; cpress.y = e.clientY;
+    startCDrag();
+    if (cdrag) moveCDrag(e.clientX, e.clientY);
+  });
+  el.addEventListener("pointerup", () => {
+    if (cdrag) { endCDrag(true); return; }
+    cancelCPress();
+  });
+  el.addEventListener("pointercancel", () => {
+    cancelCPress();
+    if (cdrag) endCDrag(false);
+  });
+}
+
+// パレットの32色から
+colorDragFrom(paletteEl, (e) => {
   const b = e.target.closest ? e.target.closest("button[data-c]") : null;
-  paletteSkipClick = false;
-  if (!b || cdrag) return;
-  try { b.setPointerCapture(e.pointerId); } catch (err) {}
-  cpress = { hex: b.dataset.c, x: e.clientX, y: e.clientY, timer: setTimeout(startCDrag, LONG_MS) };
-});
-paletteEl.addEventListener("pointermove", (e) => {
-  if (cdrag) { moveCDrag(e.clientX, e.clientY); return; }
-  if (!cpress || Math.hypot(e.clientX - cpress.x, e.clientY - cpress.y) <= MOVE_TOL) return;
-  // 時間を待たず，動かしはじめた時点でつまめるようにする。
-  // マウスだと押したとたんに動きだすので，長押しの時間だけで見ると取りこぼす。
-  clearTimeout(cpress.timer);
-  cpress.x = e.clientX; cpress.y = e.clientY;
-  startCDrag();
-  if (cdrag) moveCDrag(e.clientX, e.clientY);
-});
-paletteEl.addEventListener("pointerup", () => {
-  if (cdrag) { endCDrag(true); return; }
-  cancelCPress();
-});
-paletteEl.addEventListener("pointercancel", () => {
-  cancelCPress();
-  if (cdrag) endCDrag(false);
-});
+  return b ? { el: b, hex: b.dataset.c } : null;
+}, "palette", true);
+
+// いま選んでいる色の四角から。パレットを開かなくても，ここから運べる。
+// こちらは時間ではなく「動かしたら」つまむ。押しっぱなしはパレットを開く操作のままにしたいので
+colorDragFrom(colorPickEl, () => ({ el: colorPickEl, hex: currentColor() }), "swatch", false);
 
 /* ---------- 音をえらぶシート ---------- */
 const sheetBg = $("#sheetBg"), listEl = $("#list"), catsEl = $("#cats"), qEl = $("#q");
