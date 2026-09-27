@@ -22,8 +22,8 @@ for (const el of document.querySelectorAll("[data-icon]")) {
 /* ---------- 状態 ---------- */
 const DEFAULT = ["jajaan","mokugyo","buu","seikai2",
                  "tenshi","drumroll","memai","yay",
-                 "pafupafu","iyoo","uwaa","hakushu",
-                 "tettere","kotsuzumi","gakkari","horn"];
+                 "tettere","iyoo","uwaa","hakushu",
+                 "pafupafu","kotsuzumi","gakkari","horn"];
 let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false, colors: {} };
 
 function clampState(s) {
@@ -203,12 +203,82 @@ function decodeHash(str) {
 }
 
 /* ---------- 音 ---------- */
+// iPhone・iPad の消音モード（横のスイッチやアクションボタン）で音が消えないようにする。
+// Safari はふつう，Web Audio を着信音と同じあつかいにするので，消音にすると鳴らない。
+// 音楽や動画と同じ「playback」あつかいに切りかえると，消音モードに左右されなくなる。
+// 新しい iOS は navigator.audioSession で直接切りかえられる。
+// それが無い古い iOS では，無音の <audio> を流しつづけて同じ状態を作る（startSilentTag）。
+const IS_IOS = /iP(hone|ad|od)/.test(navigator.userAgent) ||
+               (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);   // iPadOS
+const HAS_SESSION = "audioSession" in navigator;
+
+function setPlaybackSession() {
+  if (!HAS_SESSION) return;
+  try {
+    if (navigator.audioSession.type !== "playback") navigator.audioSession.type = "playback";
+  } catch (e) {}
+}
+setPlaybackSession();   // 音の準備をする前に切りかえておく
+
 const ctx = new (window.AudioContext || window.webkitAudioContext)();
 const limiter = ctx.createDynamicsCompressor();
 limiter.threshold.value = -3; limiter.knee.value = 0;
 limiter.ratio.value = 20; limiter.attack.value = 0.003; limiter.release.value = 0.1;
 const master = ctx.createGain();
 master.connect(limiter).connect(ctx.destination);
+
+// 古い iOS 用。0.1秒の無音WAVをその場で作り，くり返し流しておく
+let silentTag = null;
+function silentWavURL() {
+  const rate = 8000, n = 800, v = new DataView(new ArrayBuffer(44 + n * 2));
+  const str = (o, s) => { for (let i = 0; i < s.length; i++) v.setUint8(o + i, s.charCodeAt(i)); };
+  str(0, "RIFF"); v.setUint32(4, 36 + n * 2, true); str(8, "WAVE");
+  str(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+  v.setUint32(24, rate, true); v.setUint32(28, rate * 2, true);
+  v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+  str(36, "data"); v.setUint32(40, n * 2, true);
+  return URL.createObjectURL(new Blob([v.buffer], { type: "audio/wav" }));
+}
+function startSilentTag() {
+  if (!IS_IOS || HAS_SESSION) return;
+  if (!silentTag) {
+    silentTag = document.createElement("audio");
+    silentTag.src = silentWavURL();
+    silentTag.loop = true;
+    silentTag.preload = "auto";
+    silentTag.setAttribute("playsinline", "");
+    silentTag.setAttribute("x-webkit-airplay", "deny");
+  }
+  if (silentTag.paused) silentTag.play().catch(() => {});
+}
+
+// 古いブラウザは resume が Promise を返さないことがあるので，受け方をそろえる
+function resumeCtx() {
+  try { const p = ctx.resume(); if (p && p.catch) p.catch(() => {}); } catch (e) {}
+}
+
+// スマホは「画面にふれた」ときでないと音を出させてくれない。
+// しかも指のときは，押した瞬間ではなく「はなした瞬間」がその合図になる。
+// 一度ゆるしてもらっても，ほかのアプリに切りかえたり電話が来たりすると止まるので，
+// ふれるたびに確かめて，止まっていれば動かしなおす。
+function unlockAudio() {
+  setPlaybackSession();
+  startSilentTag();
+  if (ctx.state === "running") return;
+  resumeCtx();
+  // 古い iOS は，ふれた瞬間に何か1つ鳴らさないと音の出口が開かない
+  const s = ctx.createBufferSource();
+  s.buffer = ctx.createBuffer(1, 1, 22050);
+  s.connect(ctx.destination);
+  s.start(0);
+}
+for (const t of ["pointerdown", "pointerup", "touchend", "click", "keydown"]) {
+  document.addEventListener(t, unlockAudio, { capture: true, passive: true });
+}
+// 画面を離れたら無音の <audio> も止める。流しっぱなしだとロック画面に再生中と出てしまう
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && silentTag) silentTag.pause();
+});
 
 const buffers = new Map(), pending = new Map();
 let active = [];
@@ -231,7 +301,8 @@ function applyVolume() {
 }
 
 function play(id) {
-  if (ctx.state === "suspended") ctx.resume();
+  // iOS は止まった理由によって "suspended" ではなく "interrupted" になるので，両方見る
+  if (ctx.state !== "running") resumeCtx();
   loadSound(id).then((buf) => {
     // 同じ音を連打したとき重なって濁らないよう，前の発音は素早く切る
     const t0 = ctx.currentTime;
@@ -277,7 +348,7 @@ function renderGrid() {
     const pad = document.createElement("button");
     pad.className = "pad" + (s ? "" : " empty") + (i === selected ? " selected" : "");
     pad.dataset.i = i;
-    if (s) pad.style.setProperty("--c", state.colors[i] || catColor.get(s.c));
+    if (s) pad.style.setProperty("--c", state.colors[i] || defaultColorFor(i));
     pad.innerHTML =
       `<span class="slotno">${i + 1}</span>` +
       `<span class="glyph">${svg(s ? s.ic : "plus")}</span>` +
@@ -336,9 +407,14 @@ const colorNoEl = $("#colorNo"), colorPickEl = $("#colorPick"),
 let colorOptCount = -1, lastPicked = NEON[0];
 let paletteSkipClick = false, swatchSkipClick = false;
 
+// 既定の色。左上の赤から右下のピンクまで，ネオンの虹の順に並ぶ。
+// 4×4 のときにちょうど32色を1つおきに使い切り，16個すべてが別の色になる。
+// 何行何列めかだけで決まるので，ボタンの数を変えても今あるボタンの色は動かない。
+// （音を入れかえても色はその場所に残るので，虹の並びはくずれない）
 function defaultColorFor(i) {
-  const id = state.slots[i];
-  return id ? catColor.get(SOUNDS[byId.get(id)].c) : "#8b8b99";
+  if (!state.slots[i]) return "#8b8b99";
+  const r = Math.floor(i / state.cols), c = i % state.cols;
+  return NEON[(r * 8 + c * 2) % NEON.length];
 }
 
 // 「ー」は，どこにも色をつけない状態。色をえらんでも画面は変わらず，
@@ -773,8 +849,4 @@ recordHistory();   // 起動時の状態を，もとにもどす先として控�
 syncVol();
 renderGrid();
 checkVersion();
-document.addEventListener("pointerdown", function once() {
-  if (ctx.state === "suspended") ctx.resume();
-  document.removeEventListener("pointerdown", once);
-});
 })();
