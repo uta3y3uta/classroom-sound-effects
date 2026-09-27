@@ -24,9 +24,10 @@ const DEFAULT = ["jajaan","mokugyo","buu","seikai2",
                  "tenshi","drumroll","memai","yay",
                  "tettere","iyoo","uwaa","hakushu",
                  "pafupafu","kotsuzumi","gakkari","horn"];
-// pattern＝配色パターン（0〜9がA〜J），rot＝グラデーションの向き（0〜7）
-let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false, colors: {},
-              pattern: 0, rot: 0, neon: true, pastel: false };
+// 既定の見た目：レインボーを右上から左下へ（↙）流し，ネオンON・パステルOFF。
+// pattern＝配色パターンの id，rot＝グラデーションの向き（0〜7。0が↘，2が↙）
+const DEFAULT_LOOK = { pattern: 3, rot: 2, neon: true, pastel: false };
+let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false, colors: {}, ...DEFAULT_LOOK };
 
 function clampState(s) {
   s.cols = Math.min(MAX, Math.max(1, s.cols | 0 || 4));
@@ -46,8 +47,8 @@ function clampState(s) {
   }
   s.colors = colors;
   const within = (v, n) => Number.isInteger(v) && v >= 0 && v < n;
-  s.pattern = within(s.pattern, PATTERNS.length) ? s.pattern : 0;
-  s.rot = within(s.rot, DIRS.length) ? s.rot : 0;
+  s.pattern = PAT.has(s.pattern) ? s.pattern : DEFAULT_LOOK.pattern;
+  s.rot = within(s.rot, DIRS.length) ? s.rot : DEFAULT_LOOK.rot;
   s.neon = s.neon !== false;          // 前の版で保存したものには無いので，無ければON
   s.pastel = s.pastel === true;
   return s;
@@ -175,11 +176,12 @@ function neonIndex(hex) {
   return best;
 }
 
-// 配色パターン・向き・ネオン・パステル。既定（A・↘・ネオンON・パステルOFF）なら足さない
+// 配色パターン・向き・ネオン・パステル。既定（レインボー・↙・ネオンON・パステルOFF）なら足さない
 // 目じるしの 2 のあとに，パターン・向き・ON/OFF（1＝ネオン，2＝パステル）を1バイトずつ
 function lookBytes() {
   const flags = (state.neon ? 1 : 0) | (state.pastel ? 2 : 0);
-  if (state.pattern === 0 && state.rot === 0 && flags === 1) return [];
+  const d = DEFAULT_LOOK;
+  if (state.pattern === d.pattern && state.rot === d.rot && state.neon === d.neon && state.pastel === d.pastel) return [];
   return [2, state.pattern, state.rot, flags];
 }
 
@@ -233,7 +235,7 @@ function decodeHash(str) {
     }
     p += 1 + n;
   }
-  const look = { pattern: 0, rot: 0, neon: true, pastel: false };
+  const look = { ...DEFAULT_LOOK };
   if (bytes[p] === 2) {
     look.pattern = bytes[p + 1]; look.rot = bytes[p + 2];
     look.neon = !!(bytes[p + 3] & 1); look.pastel = !!(bytes[p + 3] & 2);
@@ -396,7 +398,6 @@ function renderGrid() {
   });
   $("#colVal").textContent = state.cols;
   $("#rowVal").textContent = state.rows;
-  $("#padCount").textContent = `${state.cols * state.rows} こ`;
   for (const [b, v, d] of [["#colMinus", state.cols, -1], ["#colPlus", state.cols, 1],
                            ["#rowMinus", state.rows, -1], ["#rowPlus", state.rows, 1]]) {
     $(b).disabled = d < 0 ? v <= 1 : v >= MAX;
@@ -483,34 +484,36 @@ function lch(L, C, h) {
 }
 
 /* ---------- 配色パターン ---------- */
-// A〜J の10パターン。どれも色の流れ（グラデーション）で，[明るさ, あざやかさ, 色あい] を並べたもの。
+// 10パターン。どれも色の流れ（グラデーション）で，[明るさ, あざやかさ, 色あい] を並べたもの。
 // 黒い画面で沈まないよう，明るさは 0.62 より下げない。
+// 並び順がそのまま一覧の A〜J になる。id は保存や共有URLに使う番号なので，並べかえても変えない
 const PATTERNS = [
-  { name: "ネオンサイン", stops: [[0.70, 0.25, 358], [0.64, 0.26, 305], [0.72, 0.19, 262], [0.84, 0.15, 210]] },
-  { name: "サンセット",   stops: [[0.90, 0.17, 95], [0.78, 0.18, 55], [0.70, 0.21, 20], [0.66, 0.26, -15]] },
-  { name: "オーロラ",     stops: [[0.88, 0.22, 145], [0.86, 0.15, 190], [0.74, 0.16, 245], [0.66, 0.24, 300]] },
-  { name: "レインボー",   stops: [[0.68, 0.23, 25], [0.80, 0.17, 65], [0.92, 0.18, 105], [0.87, 0.23, 145],
-                                  [0.86, 0.15, 195], [0.70, 0.18, 258], [0.65, 0.26, 310], [0.70, 0.25, 355]] },
-  { name: "オーシャン",   stops: [[0.92, 0.12, 185], [0.84, 0.14, 215], [0.72, 0.17, 245], [0.64, 0.20, 268]] },
-  { name: "ライム",       stops: [[0.95, 0.20, 110], [0.89, 0.24, 135], [0.85, 0.19, 160], [0.83, 0.14, 185]] },
-  { name: "さくら",       stops: [[0.88, 0.08, 10], [0.78, 0.16, 0], [0.70, 0.23, 350], [0.66, 0.27, 335]] },
-  { name: "ラベンダー",   stops: [[0.86, 0.10, 300], [0.76, 0.16, 298], [0.68, 0.21, 292], [0.62, 0.24, 280]] },
-  { name: "ゴールド",     stops: [[0.95, 0.12, 100], [0.86, 0.14, 85], [0.76, 0.14, 70], [0.66, 0.13, 60]] },
-  { name: "シルバー",     stops: [[0.97, 0.005, 250], [0.88, 0.02, 250], [0.79, 0.04, 252], [0.72, 0.06, 255]] },
+  { id: 3, name: "レインボー",   stops: [[0.68, 0.23, 25], [0.80, 0.17, 65], [0.92, 0.18, 105], [0.87, 0.23, 145],
+                                        [0.86, 0.15, 195], [0.70, 0.18, 258], [0.65, 0.26, 310], [0.70, 0.25, 355]] },
+  { id: 1, name: "サンセット",   stops: [[0.90, 0.17, 95], [0.78, 0.18, 55], [0.70, 0.21, 20], [0.66, 0.26, -15]] },
+  { id: 2, name: "オーロラ",     stops: [[0.88, 0.22, 145], [0.86, 0.15, 190], [0.74, 0.16, 245], [0.66, 0.24, 300]] },
+  { id: 0, name: "ネオンサイン", stops: [[0.70, 0.25, 358], [0.64, 0.26, 305], [0.72, 0.19, 262], [0.84, 0.15, 210]] },
+  { id: 4, name: "オーシャン",   stops: [[0.92, 0.12, 185], [0.84, 0.14, 215], [0.72, 0.17, 245], [0.64, 0.20, 268]] },
+  { id: 5, name: "ライム",       stops: [[0.95, 0.20, 110], [0.89, 0.24, 135], [0.85, 0.19, 160], [0.83, 0.14, 185]] },
+  { id: 6, name: "さくら",       stops: [[0.88, 0.08, 10], [0.78, 0.16, 0], [0.70, 0.23, 350], [0.66, 0.27, 335]] },
+  { id: 7, name: "ラベンダー",   stops: [[0.86, 0.10, 300], [0.76, 0.16, 298], [0.68, 0.21, 292], [0.62, 0.24, 280]] },
+  { id: 8, name: "ゴールド",     stops: [[0.95, 0.12, 100], [0.86, 0.14, 85], [0.76, 0.14, 70], [0.66, 0.13, 60]] },
+  { id: 9, name: "シルバー",     stops: [[0.97, 0.005, 250], [0.88, 0.02, 250], [0.79, 0.04, 252], [0.72, 0.06, 255]] },
 ];
 const LETTERS = "ABCDEFGHIJ";
+const PAT = new Map(PATTERNS.map((p, n) => [p.id, { ...p, letter: LETTERS[n] }]));
 
 // 色が流れる向き。0 が左上→右下（↘）で，回すたびに時計回りに45度ずつ進む
 const DIRS = [[1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1], [1, 0]];   // [横, 縦]
 const cssAngle = (k) => Math.round(Math.atan2(DIRS[k][0], -DIRS[k][1]) * 180 / Math.PI);
 
-// パターン k の流れの，t（0＝はじまり〜1＝おわり）の位置の色
+// パターン（id が k）の流れの，t（0＝はじまり〜1＝おわり）の位置の色
 const patCache = new Map();
 function patternAt(k, t) {
   const key = k + ":" + t;
   let hex = patCache.get(key);
   if (!hex) {
-    const st = PATTERNS[k].stops, n = st.length - 1;
+    const st = PAT.get(k).stops, n = st.length - 1;
     const j = Math.min(n - 1, Math.floor(t * n)), u = t * n - j, a = st[j], b = st[j + 1];
     hex = lch(a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, a[2] + (b[2] - a[2]) * u);
     patCache.set(key, hex);
@@ -579,8 +582,9 @@ function syncLook() {
   neonSw.setAttribute("aria-pressed", state.neon ? "true" : "false");
   pastelSw.setAttribute("aria-pressed", state.pastel ? "true" : "false");
   patBtn.style.setProperty("--g", patternCSS(state.pattern, cssAngle(state.rot)));
-  patBtn.firstChild.textContent = LETTERS[state.pattern];
-  patBtn.setAttribute("aria-label", `配色パターン ${LETTERS[state.pattern]}（${PATTERNS[state.pattern].name}）`);
+  const p = PAT.get(state.pattern);
+  patBtn.firstChild.textContent = p.letter;
+  patBtn.setAttribute("aria-label", `配色パターン ${p.letter}（${p.name}）`);
   // パステルがONなら，パレットと一覧もやわらかい色で見せる（置いたときの色がそのまま分かる）
   for (const b of paletteEl.children) b.style.setProperty("--c", shown(b.dataset.c));
   for (const b of patternsEl.children) {
@@ -607,8 +611,8 @@ function renderColorOptions() {
 paletteEl.innerHTML = NEON.map((c) =>
   `<button type="button" role="option" data-c="${c}" style="--c:${c}" aria-label="${c}"></button>`).join("");
 
-patternsEl.innerHTML = PATTERNS.map((p, k) =>
-  `<button type="button" role="option" data-k="${k}"><span class="chip"></span><b>${LETTERS[k]}</b>${p.name}</button>`).join("");
+patternsEl.innerHTML = PATTERNS.map((p, n) =>
+  `<button type="button" role="option" data-k="${p.id}"><span class="chip"></span><b>${LETTERS[n]}</b>${p.name}</button>`).join("");
 
 // パレットとパターン一覧は，どちらか1つだけ開く
 function openPop(el, btn, open) {

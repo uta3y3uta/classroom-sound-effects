@@ -230,7 +230,7 @@ body.is-muted .vol-wrap{opacity:.35;}
 .editbar{
   flex:0 0 auto;
   max-width:900px;width:100%;margin:0 auto 10px;
-  display:none;align-items:center;gap:10px;flex-wrap:wrap;
+  display:none;align-items:center;gap:8px;flex-wrap:wrap;
   padding:9px 12px;
   background:var(--surface);border:1px solid var(--line-soft);
   border-radius:13px;
@@ -249,11 +249,9 @@ body[data-mode="edit"] .editbar{display:flex;}
 .stepper button:disabled{opacity:.25;cursor:default;}
 .stepper button svg{width:13px;height:13px;}
 .stepper .val{
-  min-width:46px;text-align:center;font-size:12px;font-weight:700;
+  min-width:30px;text-align:center;font-size:12px;font-weight:700;
   font-variant-numeric:tabular-nums;
 }
-.hint{font-size:11px;color:var(--text-faint);white-space:nowrap;}
-.drag-hint::before{content:"／";margin-right:8px;opacity:.5;}
 
 /* もとにもどす／やりなおす。ゴミ箱のとなりに，主張しない見た目で置く */
 .icon-btn.quiet{
@@ -443,10 +441,31 @@ body[data-mode="edit"] .editbar{display:flex;}
 }
 .toast.show{opacity:1;transform:translate(-50%,0);}
 
+/* iPadのたて向き（768px）でも，編集バーが1列におさまるよう少しつめる */
+@media (max-width:820px){
+  .editbar{padding:9px 10px;}
+  .color-ctl{gap:5px;}
+  .color-ctl::before{display:none;}
+  .switch{padding:0 8px 0 5px;gap:5px;}
+  .switch .knob{width:24px;}
+  .switch[aria-pressed="true"] .knob::after{transform:translateX(8px);}
+}
 @media (max-width:480px){
   .seg button{padding:6px 10px;}
-  .drag-hint{display:none;}
-  .color-ctl::before{display:none;}
-  .color-ctl .lbl{display:none;}
-  .switch{padding:0 8px 0 5px;gap:5px;}
+  /* スマホでは色のらんを下の段へ回し，1段めに ＋− と もどす・ゴミ箱 を並べる。
+     どちらの段も1列におさまるよう，さらに少しつめる */
+  .stepper .val{min-width:22px;}
+  .color-ctl{order:1;gap:4px;}
+  .color-ctl select{padding:0 2px;}
+  .switch{padding:0 7px 0 4px;gap:4px;font-size:11px;}
+  .switch .knob{width:20px;}
+  .switch[aria-pressed="true"] .knob::after{transform:translateX(4px);}
+  #colorReset{width:32px;height:32px;}
+}
+/* 360px前後の細いスマホでも2段におさまるよう，左右の余白をつめる */
+@media (max-width:380px){
+  body{padding-left:8px;padding-right:8px;}
+  .editbar{padding:9px 8px;}
+  .stepper button{width:24px;}
+  .color-ctl{gap:3px;}
 }
