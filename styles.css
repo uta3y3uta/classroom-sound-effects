@@ -382,12 +382,12 @@ body[data-mode="edit"] .editbar{display:flex;}
   animation:rise .22s cubic-bezier(.2,.8,.3,1);
 }
 @keyframes rise{from{transform:translateY(24px);opacity:0;}to{transform:none;opacity:1;}}
-.sheet-head{display:flex;align-items:center;gap:10px;margin-bottom:11px;}
+.sheet-head{flex:0 0 auto;display:flex;align-items:center;gap:10px;margin-bottom:11px;}
 .sheet-title{font-size:13px;font-weight:700;letter-spacing:.06em;}
 .search{
   display:flex;align-items:center;gap:8px;
   background:var(--bg);border:1px solid var(--line-soft);
-  border-radius:10px;padding:0 11px;margin-bottom:10px;
+  border-radius:10px;padding:0 11px;margin-bottom:10px;flex:0 0 auto;
 }
 .search svg{width:15px;height:15px;color:var(--text-faint);flex:0 0 auto;}
 .search input{
@@ -399,6 +399,7 @@ body[data-mode="edit"] .editbar{display:flex;}
 .cats{
   display:flex;gap:6px;overflow-x:auto;padding-bottom:10px;
   scrollbar-width:none;
+  flex:0 0 auto;   /* 一覧が長いと押しつぶされ，スマホで文字がはみ出していた */
 }
 .cats::-webkit-scrollbar{display:none;}
 .cats button{
