@@ -112,7 +112,12 @@ svg{display:block;}
 .pad::after{
   content:"";position:absolute;inset:0;border-radius:inherit;
   background:radial-gradient(90% 70% at 50% 0%,var(--c,transparent),transparent 72%);
-  opacity:0;transition:opacity .18s ease;pointer-events:none;
+  opacity:var(--glow0,0);transition:opacity .18s ease;pointer-events:none;
+}
+/* ネオン：アイコンが管のようににじんで光り，ボタンの上にもうっすら色が差す */
+body.neon{--glow0:.07;}
+body.neon .pad:not(.empty) .glyph svg{
+  filter:drop-shadow(0 0 5px var(--c)) drop-shadow(0 0 1px var(--c));
 }
 .pad .glyph{
   position:relative;
@@ -264,7 +269,7 @@ body[data-mode="edit"] .editbar{display:flex;}
 #redoBtn{margin-right:2px;}
 
 /* 色をかえるコントロール */
-.color-ctl{display:flex;align-items:center;gap:6px;position:relative;}
+.color-ctl{display:flex;align-items:center;flex-wrap:wrap;gap:6px;position:relative;}
 .color-ctl::before{content:"／";margin-right:2px;opacity:.5;color:var(--text-faint);font-size:11px;}
 .color-ctl select{
   height:30px;padding:0 6px;
@@ -298,6 +303,59 @@ body[data-mode="edit"] .editbar{display:flex;}
 }
 .palette button:hover{transform:scale(1.15);}
 .palette button.on{box-shadow:0 0 0 2px var(--surface),0 0 0 4px var(--c);}
+
+/* 配色パターン。四角の中に，いまの色の流れと向きをそのまま描く */
+.pat-btn{
+  width:30px;height:30px;padding:3px;flex:0 0 auto;
+  border:1px solid var(--line-soft);border-radius:8px;background:var(--bg);
+}
+.pat-btn .fill{
+  display:flex;align-items:center;justify-content:center;
+  width:100%;height:100%;border-radius:5px;background:var(--g,var(--text-dim));
+  font-size:11px;font-weight:800;color:#0a0a0c;
+  text-shadow:0 0 3px rgba(255,255,255,.45);
+}
+.pat-btn[aria-expanded="true"]{border-color:var(--line);background:var(--surface-2);}
+#patRot{margin:0 -2px;}
+
+.patterns{
+  position:absolute;top:calc(100% + 9px);left:0;z-index:60;
+  display:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;
+  width:min(300px,calc(100vw - 32px));padding:8px;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  box-shadow:0 16px 34px rgba(0,0,0,.6);
+}
+.patterns.open{display:grid;}
+.patterns button{
+  display:flex;align-items:center;gap:8px;min-width:0;
+  padding:6px 8px 6px 6px;border-radius:9px;border:1px solid transparent;
+  font-size:12px;color:var(--text-dim);text-align:left;white-space:nowrap;
+}
+.patterns button:hover{background:var(--surface-2);color:var(--text);}
+.patterns button.on{border-color:var(--line);background:var(--surface-2);color:var(--text);}
+.patterns .chip{width:34px;height:22px;flex:0 0 auto;border-radius:6px;background:var(--g);}
+.patterns b{width:10px;font-size:12px;color:var(--text);}
+
+/* ネオン・パステルのON／OFF */
+.switch{
+  height:30px;flex:0 0 auto;
+  display:inline-flex;align-items:center;gap:7px;padding:0 10px 0 6px;
+  border:1px solid var(--line-soft);border-radius:999px;background:var(--bg);
+  font-size:12px;color:var(--text-dim);white-space:nowrap;
+}
+.switch .knob{
+  position:relative;width:28px;height:16px;border-radius:999px;background:var(--line);
+  transition:background .15s;
+}
+.switch .knob::after{
+  content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;
+  background:var(--text-faint);transition:transform .15s,background .15s,box-shadow .15s;
+}
+.switch[aria-pressed="true"]{color:var(--text);border-color:var(--line);}
+.switch[aria-pressed="true"] .knob{background:#34343f;}
+.switch[aria-pressed="true"] .knob::after{transform:translateX(12px);}
+#neonSw[aria-pressed="true"] .knob::after{background:#7df9ff;box-shadow:0 0 6px #7df9ff;}
+#pastelSw[aria-pressed="true"] .knob::after{background:#ffc6e4;}
 
 /* 色をつまんでパッドまで運んでいる最中 */
 .palette.carrying{opacity:.2;}
@@ -390,4 +448,5 @@ body[data-mode="edit"] .editbar{display:flex;}
   .drag-hint{display:none;}
   .color-ctl::before{display:none;}
   .color-ctl .lbl{display:none;}
+  .switch{padding:0 8px 0 5px;gap:5px;}
 }
