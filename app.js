@@ -4,7 +4,7 @@
 const SOUNDS = window.SOUNDS, CATS = window.CATS, ICONS = window.ICONS;
 const byId = new Map(SOUNDS.map((s, i) => [s.i, i]));
 const catColor = new Map(CATS.map((c) => [c.id, c.color]));
-const MAX = 8, STORE = "kyoshitsu-se.v3";
+const MAX = 10, STORE = "kyoshitsu-se.v3";
 const $ = (s) => document.querySelector(s);
 
 /* ---------- アイコン ---------- */

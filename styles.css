@@ -96,12 +96,15 @@ svg{display:block;}
   margin:auto;
 }
 
+/* 中のアイコンと文字は，ボタン自身の大きさ（cqmin）に合わせて縮める。
+   大きいボタンでは前と同じ画面の高さ基準のまま，10×10の小さいボタンでもはみ出さない */
 .pad{
   position:relative;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(4px,1.1vh,9px);
+  container-type:size;
   min-width:0;min-height:0;
-  padding:6px 4px;
+  /* 上下の余白は，1マスの高さのめやす（ステージの高さ÷行数）の1割。最大は前と同じ6px */
+  padding:clamp(2px,calc(100cqh / var(--rows) * .1),6px) 4px;
   border-radius:var(--radius);
   border:1px solid var(--line-soft);
   background:linear-gradient(180deg,var(--surface-2),var(--surface));
@@ -121,14 +124,15 @@ body.neon .pad:not(.empty) .glyph svg{
 }
 .pad .glyph{
   position:relative;
-  width:clamp(18px,4.4vh,34px);height:clamp(18px,4.4vh,34px);
+  width:clamp(12px,min(4.4vh,50cqmin),34px);height:clamp(12px,min(4.4vh,50cqmin),34px);
   color:var(--c,var(--text-dim));
   transition:color .15s,transform .08s ease;
 }
 .pad .glyph svg{width:100%;height:100%;}
 .pad .cap{
   position:relative;
-  font-size:clamp(8px,1.55vh,12px);
+  margin-top:clamp(2px,min(1.1vh,7cqmin),9px);
+  font-size:clamp(7px,min(1.55vh,26cqmin),12px);
   font-weight:600;letter-spacing:.01em;line-height:1.15;
   color:var(--text-dim);
   text-align:center;
@@ -164,7 +168,7 @@ body[data-mode="edit"] .pad.selected{
 }
 .pad .slotno{
   position:absolute;top:4px;left:6px;
-  font-size:9px;font-weight:700;color:var(--text-faint);
+  font-size:clamp(7px,16cqmin,9px);font-weight:700;color:var(--text-faint);
   opacity:0;transition:opacity .15s;
 }
 body[data-mode="edit"] .pad .slotno{opacity:.55;}
