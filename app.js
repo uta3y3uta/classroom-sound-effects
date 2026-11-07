@@ -20,7 +20,7 @@ for (const el of document.querySelectorAll("[data-icon]")) {
 }
 
 /* ---------- 状態 ---------- */
-const DEFAULT = ["jajaan","mokugyo","buu","seikai2",
+const DEFAULT = ["deeden","mokugyo","buu","seikai2",
                  "tenshi","drumroll","memai","yay",
                  "tettere","iyoo","uwaa","hakushu",
                  "pafupafu","kotsuzumi","gakkari","horn"];
@@ -29,12 +29,15 @@ const DEFAULT = ["jajaan","mokugyo","buu","seikai2",
 const DEFAULT_LOOK = { pattern: 3, rot: 2, neon: true, pastel: false };
 let state = { cols: 4, rows: 4, slots: DEFAULT.slice(), vol: 80, muted: false, colors: {}, ...DEFAULT_LOOK };
 
+// 入れかえた音。前に保存した並べ方に古い名前が残っていても，新しい音として読む
+const RENAMED = { jajaan: "deeden" };
+
 function clampState(s) {
   s.cols = Math.min(MAX, Math.max(1, s.cols | 0 || 4));
   s.rows = Math.min(MAX, Math.max(1, s.rows | 0 || 4));
   const count = s.cols * s.rows;
   s.slots = Array.from({ length: count }, (_, i) => {
-    const v = s.slots[i];
+    const v = RENAMED[s.slots[i]] || s.slots[i];
     return typeof v === "string" && byId.has(v) ? v : null;
   });
   s.vol = Math.min(100, Math.max(0, s.vol | 0));
